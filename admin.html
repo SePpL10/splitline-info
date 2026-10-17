@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Linefact Admin</title>
+<style>
+:root{color-scheme:light;
+  --page:#f4f5f2;--surface:#ffffff;--surface-2:#f2f3ef;--ink:#121418;--ink-2:#52575e;--muted:#868b91;--line:#e3e4df;--axis:#c6c8c2;
+  --accent:#1e50ff;--accent-ink:#ffffff;--series:#2a78d6;--series-wash:rgba(42,120,214,.10);
+  --good:#0ca30c;--good-ink:#006300;--warn:#fab219;--crit:#d03b3b;--ring:rgba(18,20,24,.08);--shadow:0 1px 2px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.04)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --page:#0e0f11;--surface:#17191d;--surface-2:#202329;--ink:#f0f1f2;--ink-2:#c1c4c9;--muted:#8c9096;--line:#2a2d33;--axis:#3a3e45;
+  --accent:#5b7fff;--accent-ink:#ffffff;--series:#3987e5;--series-wash:rgba(57,135,229,.14);--good-ink:#0ca30c;--ring:rgba(255,255,255,.08);--shadow:none}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --page:#0e0f11;--surface:#17191d;--surface-2:#202329;--ink:#f0f1f2;--ink-2:#c1c4c9;--muted:#8c9096;--line:#2a2d33;--axis:#3a3e45;
+  --accent:#5b7fff;--accent-ink:#ffffff;--series:#3987e5;--series-wash:rgba(57,135,229,.14);--good-ink:#0ca30c;--ring:rgba(255,255,255,.08);--shadow:none}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 12px;min-height:36px}
+button:hover{background:var(--surface-2)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+button.danger{color:var(--crit)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,select{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px;min-height:38px}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--accent);display:grid;place-items:center;flex:none}
+.logo svg{width:20px;height:20px}
+.brand{font-weight:750;font-size:1.25rem;letter-spacing:-.01em}
+.brand small{font-weight:500;color:var(--muted);font-size:.85rem;margin-left:6px}
+.sp{flex:1}
+.stamp{color:var(--muted);font-size:.85rem}
+.filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 16px}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{border:0;border-radius:999px;min-height:30px;padding:4px 14px;background:transparent;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface);font-weight:600}
+.grid{display:grid;gap:14px}
+.g-hero{grid-template-columns:minmax(260px,1.2fr) repeat(3,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g6{grid-template-columns:repeat(6,minmax(0,1fr))}
+@media (max-width:980px){.g-hero{grid-template-columns:repeat(2,minmax(0,1fr))}.g6{grid-template-columns:repeat(3,minmax(0,1fr))}.g3{grid-template-columns:1fr 1fr}}
+@media (max-width:640px){.g-hero,.g3,.g2{grid-template-columns:1fr}.g6{grid-template-columns:1fr 1fr}}
+.card{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);border:1px solid var(--ring);padding:16px;min-width:0}
+.card h2{font-size:.95rem;margin:0 0 2px;font-weight:650}
+.card .sub{color:var(--muted);font-size:.82rem;margin:0 0 10px}
+.chead{display:flex;align-items:flex-start;gap:8px}
+.chead .sp{flex:1}
+.tbtn{min-height:28px;padding:3px 10px;font-size:.78rem;border-radius:999px;color:var(--ink-2)}
+.hero .lbl{color:var(--ink-2);font-size:.9rem}
+.hero .big{font-size:3.4rem;font-weight:700;letter-spacing:-.02em;line-height:1.05;margin:4px 0}
+.delta{font-size:.85rem;color:var(--good-ink);font-weight:600}
+.delta.zero{color:var(--muted);font-weight:500}
+.tile .lbl{color:var(--ink-2);font-size:.85rem}
+.tile .val{font-size:1.9rem;font-weight:650;letter-spacing:-.01em;margin-top:2px}
+.tile .hint{color:var(--muted);font-size:.78rem}
+.tile.alert{border-color:color-mix(in srgb,var(--crit) 45%,transparent)}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:.75rem;font-weight:650;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--ink-2)}
+.badge.crit{background:color-mix(in srgb,var(--crit) 14%,transparent);color:var(--crit)}
+.badge.good{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good-ink)}
+.mini{display:flex;flex-direction:column;gap:2px;padding:12px 14px}
+.mini .val{font-size:1.35rem;font-weight:650}
+.mini .lbl{color:var(--ink-2);font-size:.8rem}
+section{margin-top:22px}
+section>h3{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:700}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .grid line{stroke:var(--line);stroke-width:1}
+.chart .base{stroke:var(--axis);stroke-width:1}
+.chart text{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.chart .lab{fill:var(--ink);font-weight:650;font-size:12px}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.12);padding:7px 10px;font-size:.8rem;white-space:nowrap;transform:translate(-50%,-100%);opacity:0;transition:opacity .1s;z-index:5}
+.tip b{display:block;font-size:.95rem}
+.tip span{color:var(--muted)}
+.tip.on{opacity:1}
+.hbar{display:grid;grid-template-columns:minmax(80px,auto) 1fr auto;gap:6px 10px;align-items:center;font-size:.85rem}
+.hbar .t{height:12px;border-radius:0 4px 4px 0;background:var(--series);min-width:2px}
+.hbar .n{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600}
+.hbar .k{color:var(--ink-2)}
+.meter{margin:10px 0 14px}
+.meter .row{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:5px}
+.meter .row span{color:var(--muted)}
+.meter .tr{height:10px;border-radius:999px;background:color-mix(in srgb,var(--series) 18%,transparent);overflow:hidden}
+.meter .fl{height:100%;border-radius:999px;background:var(--series)}
+.meter .fl.warn{background:var(--warn)}.meter .fl.crit{background:var(--crit)}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tscroll{overflow-x:auto;margin:0 -4px;padding:0 4px}
+.links{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.lgrp h4{margin:0 0 6px;font-size:.85rem}
+.lgrp a{display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none;color:var(--ink);padding:8px 10px;border-radius:10px;background:var(--surface-2);margin-bottom:6px;font-size:.88rem}
+.lgrp a:hover{background:color-mix(in srgb,var(--accent) 10%,var(--surface-2))}
+.lgrp a span{color:var(--muted);font-size:.8rem}
+.rep{border-top:1px solid var(--line);padding:12px 0;display:flex;flex-direction:column;gap:6px}
+.rep:first-child{border-top:0}
+.rep .meta{color:var(--muted);font-size:.8rem}
+.rep .why{font-weight:600}
+.rep .ctx{background:var(--surface-2);border-radius:10px;padding:8px 10px;font-size:.85rem;white-space:pre-wrap;word-break:break-word}
+.rep .acts{display:flex;gap:6px;flex-wrap:wrap}
+.empty{color:var(--muted);font-size:.9rem;padding:8px 0}
+.err{color:var(--crit)}
+.login{max-width:380px;margin:12vh auto 0;padding:0 16px}
+.login .card{padding:22px}
+.login label{display:block;font-size:.85rem;color:var(--ink-2);margin:12px 0 4px}
+.login input{width:100%}
+.login button{width:100%;margin-top:16px}
+.loading{opacity:.55;transition:opacity .2s}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.ok{color:var(--good-ink)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// =====================================================================
+// Linefact Admin – Übersicht über Nutzer, Nutzung, Inhalte und Meldungen.
+// Anmeldung mit deinem Linefact-Konto (E-Mail + Passwort). Daten gibt es nur,
+// wenn in Supabase bei deinem Profil is_admin = true gesetzt ist.
+// =====================================================================
+const CFG={
+  sbUrl:'https://pgkkbzozlufbzcdtkbrb.supabase.co',
+  sbKey:'sb_publishable_oizBlM6hGJoDkOjSbtd9Aw_ydfWCJRb',
+  mail:'josef.mo@gmx.at',
+  links:[
+    {g:'GitHub',items:[['App (iPhone)','https://github.com/SePpL10/Splitline-Beta','Repo'],['Apple-Watch-App','https://github.com/SePpL10/Linefact-Watch','Repo'],['Webseite','https://github.com/SePpL10/splitline-info','Repo']]},
+    {g:'Supabase (Datenbank)',items:[['Projekt','https://supabase.com/dashboard/project/pgkkbzozlufbzcdtkbrb','Übersicht'],['Tabellen','https://supabase.com/dashboard/project/pgkkbzozlufbzcdtkbrb/editor','Editor'],['SQL Editor','https://supabase.com/dashboard/project/pgkkbzozlufbzcdtkbrb/sql/new','Neu'],['Konten','https://supabase.com/dashboard/project/pgkkbzozlufbzcdtkbrb/auth/users','Auth'],['Fotos','https://supabase.com/dashboard/project/pgkkbzozlufbzcdtkbrb/storage/buckets','Storage'],['Logs','https://supabase.com/dashboard/project/pgkkbzozlufbzcdtkbrb/logs/explorer','Fehler']]},
+    {g:'Bauen & Apple',items:[['Codemagic','https://codemagic.io/apps','Builds'],['App Store Connect','https://appstoreconnect.apple.com/apps','Apps'],['Apple Developer','https://developer.apple.com/account/resources/identifiers/list','IDs']]},
+    {g:'Karten & Web',items:[['Mapbox Konto','https://account.mapbox.com/','Token'],['Mapbox Statistik','https://account.mapbox.com/statistics/','Abrufe'],['Webseite','https://seppl10.github.io/splitline-info/','Live'],['Datenschutz','https://seppl10.github.io/splitline-info/#datenschutz','Seite']]}
+  ]
+};
+const $=s=>document.querySelector(s);
+const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e};
+const NF=new Intl.NumberFormat('de-AT');const fmtN=n=>n==null?'–':NF.format(n);
+const compact=n=>n>=1e6?(n/1e6).toFixed(1).replace('.',',')+' Mio.':n>=1e4?Math.round(n/1e3)+' Tsd.':NF.format(n);
+const fmtB=b=>b==null?'–':b>=1e9?(b/1e9).toFixed(2).replace('.',',')+' GB':b>=1e6?(b/1e6).toFixed(1).replace('.',',')+' MB':Math.round(b/1e3)+' kB';
+const dShort=d=>{const x=new Date(d+'T12:00:00');return x.toLocaleDateString('de-AT',{day:'numeric',month:'numeric'})};
+const dLong=d=>d?new Date(d).toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric'}):'–';
+const ss={get(k){try{return JSON.parse(sessionStorage.getItem(k))}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
+let SES=ss.get('lfa_ses'),ST={days:30,data:null,users:[],q:'',reports:[],clubs:[],allRep:false};
+
+// ---------- Supabase ----------
+async function req(path,body,tok){const h={apikey:CFG.sbKey,'Content-Type':'application/json'};if(tok)h.Authorization='Bearer '+tok;
+  let r;try{r=await fetch(CFG.sbUrl+path,{method:'POST',headers:h,body:JSON.stringify(body||{})})}catch(e){throw new Error('Keine Verbindung zum Server.')}
+  const t=await r.text();let j=null;try{j=t?JSON.parse(t):null}catch(e){}
+  if(!r.ok){const e=new Error((j&&(j.message||j.msg||j.error_description))||('Fehler '+r.status));e.status=r.status;e.code=j&&(j.code||j.error);throw e}return j}
+async function token(){if(!SES)throw new Error('Nicht angemeldet');if(Date.now()<SES.exp-60000)return SES.at;
+  const j=await req('/auth/v1/token?grant_type=refresh_token',{refresh_token:SES.rt},null);SES={at:j.access_token,rt:j.refresh_token,exp:Date.now()+j.expires_in*1000};ss.set('lfa_ses',SES);return SES.at}
+async function rpc(fn,args){return req('/rest/v1/rpc/'+fn,args||{},await token())}
+
+// ---------- Anmeldung ----------
+function showLogin(msg){const a=$('#app');a.innerHTML='';const w=el('div','login'),c=el('div','card');
+  const h=el('div');h.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:6px';h.append(logo(),el('div','brand','Linefact Admin'));
+  const f=document.createElement('form');f.innerHTML='<label for="lm">E-Mail</label><input id="lm" type="email" autocomplete="username" required><label for="lp">Passwort</label><input id="lp" type="password" autocomplete="current-password" required><button class="primary" type="submit">Anmelden</button><p class="err" id="le" role="alert"></p>';
+  c.append(h,el('p','sub','Mit deinem Linefact-Konto. Nur Konten mit Admin-Recht sehen Daten.'),f);w.append(c);a.append(w);
+  if(msg)f.querySelector('#le').textContent=msg;
+  f.onsubmit=async e=>{e.preventDefault();const b=f.querySelector('button');b.disabled=true;f.querySelector('#le').textContent='';
+    try{const j=await req('/auth/v1/token?grant_type=password',{email:f.querySelector('#lm').value.trim(),password:f.querySelector('#lp').value},null);SES={at:j.access_token,rt:j.refresh_token,exp:Date.now()+j.expires_in*1000};ss.set('lfa_ses',SES);start()}
+    catch(x){f.querySelector('#le').textContent=/invalid/i.test(x.message)?'E-Mail oder Passwort stimmt nicht.':x.message;b.disabled=false}}}
+function logout(){ss.del('lfa_ses');SES=null;showLogin()}
+function logo(){const d=el('div','logo');d.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M15 4l-3.2 4.6M9.2 15.4L6 20"/><circle cx="12.5" cy="12" r="1.6" fill="#111" stroke="none"/></svg>';return d}
+
+// ---------- Laden ----------
+async function start(){if(!SES){showLogin();return}
+  try{const p=await rpc('get_my_profile',{});if(!p||!p[0]||!p[0].is_admin){showLogin('Dieses Konto hat kein Admin-Recht. In Supabase › Tabellen › profiles bei deinem Konto is_admin = true setzen.');ss.del('lfa_ses');SES=null;return}ST.me=p[0]}
+  catch(e){if(e.status===400||e.status===401){logout();return}showLogin(e.message);return}
+  shell();await loadAll()}
+async function loadAll(){const m=$('#main');if(m)m.classList.add('loading');
+  try{const[o,d,u,r,c]=await Promise.all([rpc('admin_overview'),rpc('admin_daily',{p_days:ST.days}),rpc('admin_users',{p_query:ST.q,p_limit:200}),rpc('admin_reports',{p_all:ST.allRep}),rpc('admin_clubs')]);
+    ST.o=o;ST.d=d||[];ST.users=u||[];ST.reports=r||[];ST.clubs=c||[];ST.err='';ST.at=new Date()}
+  catch(e){ST.err=e.code==='PGRST202'?'Die Datenbank ist nicht aktuell: Bitte die neue SQL-Datei in Supabase ausführen.':e.message}
+  render();if(m)m.classList.remove('loading')}
+
+// ---------- Seite ----------
+function shell(){const a=$('#app');a.innerHTML='';const w=el('div','wrap');
+  const h=el('header','top');const b=el('div','brand','Linefact');b.append(el('small',null,'Admin'));
+  const st=el('span','stamp');st.id='stamp';const rf=el('button',null,'Aktualisieren');rf.onclick=loadAll;const th=el('button',null,'Hell/Dunkel');th.setAttribute('aria-label','Hell oder dunkel umschalten');
+  th.onclick=()=>{const r=document.documentElement,cur=r.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');r.dataset.theme=cur==='dark'?'light':'dark';try{localStorage.setItem('lfa_theme',r.dataset.theme)}catch(e){};render()};
+  const lo=el('button',null,'Abmelden');lo.onclick=logout;h.append(logo(),b,el('span','sp'),st,rf,th,lo);
+  const f=el('div','filters');f.append(el('span','stamp','Zeitraum'));const sg=el('div','seg');sg.setAttribute('role','group');sg.setAttribute('aria-label','Zeitraum');
+  [[7,'7 Tage'],[30,'30 Tage'],[90,'90 Tage'],[365,'1 Jahr']].forEach(([n,t])=>{const x=el('button',null,t);x.type='button';x.setAttribute('aria-pressed',String(ST.days===n));x.onclick=()=>{ST.days=n;sg.querySelectorAll('button').forEach(y=>y.setAttribute('aria-pressed',String(y===x)));loadAll()};sg.append(x)});f.append(sg);
+  const m=el('main');m.id='main';w.append(h,f,m);a.append(w)}
+function render(){const m=$('#main');if(!m)return;m.innerHTML='';$('#stamp').textContent=ST.at?'Stand '+ST.at.toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}):'';
+  if(ST.err){const c=el('div','card');c.append(el('p','err',ST.err));m.append(c);m.append(linksSec());return}
+  const o=ST.o,D=ST.d,sum=k=>D.reduce((s,x)=>s+(x[k]||0),0);
+  // Kopf: Nutzer + Aktivität
+  const g=el('div','grid g-hero');
+  const hero=el('div','card hero');hero.append(el('div','lbl','Nutzer mit Konto'),el('div','big',fmtN(o.users)));const dl=el('div','delta'+(o.users_7?'':' zero'),(o.users_7?'+'+fmtN(o.users_7):'±0')+' in 7 Tagen · +'+fmtN(o.users_30)+' in 30 Tagen');hero.append(dl);
+  g.append(hero,tile('Heute aktiv',o.dau,'Nutzer, die die App heute geöffnet haben'),tile('Aktiv in 7 Tagen',o.wau,'verschiedene Nutzer'),tile('Aktiv in 30 Tagen',o.mau,o.users?Math.round(o.mau/o.users*100)+' % aller Konten':''));m.append(g);
+  const g2=el('div','grid g3');g2.style.marginTop='14px';
+  g2.append(tile('App-Starts (30 Tage)',o.opens_30,o.mau?'Ø '+(o.opens_30/o.mau).toFixed(1).replace('.',',')+' je aktivem Nutzer':''),tile('Ø aktive Tage je Nutzer',o.active_days_30,'in den letzten 30 Tagen',true),repTile(o.reports_open));m.append(g2);
+  // Verläufe
+  const s1=el('section');s1.append(el('h3',null,'Verlauf · '+(ST.days===365?'1 Jahr':ST.days+' Tage')));const cg=el('div','grid g2');
+  cg.append(chartCard('Aktive Nutzer pro Tag','Summe im Zeitraum: '+fmtN(sum('opens'))+' App-Starts',D,'active','line'),chartCard('Neue Konten pro Tag','Im Zeitraum: '+fmtN(sum('new_users')),D,'new_users','bar'),
+    chartCard('Geteilte Aktivitäten pro Tag','Im Zeitraum: '+fmtN(sum('activities')),D,'activities','bar'),chartCard('Beiträge und Kommentare pro Tag','Beiträge: '+fmtN(sum('posts'))+' · Kommentare: '+fmtN(sum('comments')),D.map(x=>Object.assign({},x,{pc:(x.posts||0)+(x.comments||0)})),'pc','bar'));
+  s1.append(cg);m.append(s1);
+  // Inhalte
+  const s2=el('section');s2.append(el('h3',null,'Inhalte'));const ig=el('div','grid g6');
+  [['Aktivitäten geteilt',o.activities,'+'+fmtN(o.activities_30)+' in 30 T.'],['Beiträge',o.posts],['Kommentare',o.comments],['✊🏼 Gefällt mir',o.likes],['Abos',o.follows],['Clubs',o.clubs,fmtN(o.club_members)+' Mitglieder'],
+   ['MX-Strecken',o.mx_tracks],['Race-Strecken',o.race_courses],['Rekorde',o.records],['Gekoppelte Uhren',o.devices],['Uhr-Fahrten wartend',o.device_rides,'noch nicht abgeholt'],['Datenbank',o.schema,'SQL-Stand']].forEach(([l,v,h])=>{const c=el('div','card mini');c.append(el('div','val',typeof v==='number'?compact(v):String(v||'–')),el('div','lbl',l));if(h)c.append(el('div','lbl',h));ig.append(c)});
+  s2.append(ig);const g3=el('div','grid g3');g3.style.marginTop='14px';
+  const MN={mx:'Motocross',enduro:'Enduro',race:'Enduro Race',post:'Beiträge'};
+  g3.append(hbarCard('Geteilt nach Art','alle Zeit',Object.entries(o.modes||{}).map(([k,v])=>[MN[k]||k,v]).sort((a,b)=>b[1]-a[1])),
+    hbarCard('App-Versionen','Nutzer je Version, letzte 30 Tage',(o.versions||[]).map(x=>[x.version,x.users])),storageCard(o));s2.append(g3);m.append(s2);
+  // Meldungen
+  m.append(reportsSec());
+  // Nutzer + Clubs
+  const s4=el('section');s4.append(el('h3',null,'Nutzer und Clubs'));const ug=el('div','grid');ug.style.gridTemplateColumns='minmax(0,2fr) minmax(0,1fr)';if(innerWidth<900)ug.style.gridTemplateColumns='1fr';ug.append(usersCard(),clubsCard());s4.append(ug);m.append(s4);
+  m.append(linksSec())}
+function tile(l,v,h,raw){const c=el('div','card tile');c.append(el('div','lbl',l),el('div','val',raw?String(v).replace('.',','):fmtN(v)));if(h)c.append(el('div','hint',h));return c}
+function repTile(n){const c=el('div','card tile'+(n?' alert':''));c.append(el('div','lbl','Offene Meldungen'));const v=el('div','val',fmtN(n));c.append(v);
+  const b=el('span','badge '+(n?'crit':'good'),n?'⚠ bitte prüfen (in der Regel binnen 24 h)':'✓ alles erledigt');c.append(b);if(n){c.style.cursor='pointer';c.onclick=()=>document.getElementById('reports').scrollIntoView({behavior:'smooth'})}return c}
+
+// ---------- Diagramme (eine Reihe je Diagramm, Hover + Tabelle) ----------
+function niceMax(v){if(v<=4)return 4;const p=Math.pow(10,Math.floor(Math.log10(v))),f=v/p;return(f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p}
+function chartCard(title,sub,D,key,kind){const c=el('div','card');const hd=el('div','chead');const tt=el('div');tt.append(el('h2',null,title),el('p','sub',sub));
+  const tb=el('button','tbtn','Tabelle');tb.type='button';tb.setAttribute('aria-pressed','false');hd.append(tt,el('span','sp'),tb);c.append(hd);
+  const box=el('div','chart');c.append(box);const tab=el('div','tscroll');tab.hidden=true;c.append(tab);
+  tb.onclick=()=>{const on=tab.hidden;tab.hidden=!on;box.hidden=on;tb.setAttribute('aria-pressed',String(on));tb.textContent=on?'Diagramm':'Tabelle'};
+  const t=el('table');t.innerHTML='<thead><tr><th>Tag</th><th class="n">'+title.replace(/ pro Tag/,'')+'</th></tr></thead>';const bd=el('tbody');D.slice().reverse().forEach(x=>{const r=el('tr');r.append(el('td',null,dLong(x.day)),el('td','n',fmtN(x[key])));bd.append(r)});t.append(bd);tab.append(t);
+  drawChart(box,D,key,kind,title);return c}
+function drawChart(box,D,key,kind,title){const W=560,H=210,L=34,R=10,T=14,B=26,n=D.length,vals=D.map(x=>x[key]||0),mx=niceMax(Math.max(1,...vals)),pw=W-L-R,ph=H-T-B;
+  const X=i=>L+(n<=1?pw/2:kind==='bar'?(i+.5)*pw/n:i*pw/(n-1)),Y=v=>T+ph-(v/mx)*ph;const NS='http://www.w3.org/2000/svg';const sv=document.createElementNS(NS,'svg');sv.setAttribute('viewBox','0 0 '+W+' '+H);sv.setAttribute('role','img');
+  const total=vals.reduce((a,b)=>a+b,0);sv.setAttribute('aria-label',title+': '+n+' Tage, höchster Wert '+Math.max(...vals)+', zusammen '+total);
+  const mk=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);(p||sv).append(e);return e};
+  const gg=mk('g',{class:'grid'});for(let k=0;k<=4;k++){const v=mx*k/4,y=Y(v);if(k)mk('line',{x1:L,x2:W-R,y1:y,y2:y},gg);const tx=mk('text',{x:L-6,y:y+4,'text-anchor':'end'});tx.textContent=v>=1000?Math.round(v/1000)+'K':String(Math.round(v*10)/10)}
+  mk('line',{x1:L,x2:W-R,y1:Y(0),y2:Y(0),class:'base'});
+  const step=Math.max(1,Math.ceil(n/7));D.forEach((x,i)=>{if(i%step&&i!==n-1)return;if(i!==n-1&&n-1-i<step*.6)return;const tx=mk('text',{x:X(i),y:H-8,'text-anchor':i===0&&kind!=='bar'?'start':i===n-1&&kind!=='bar'?'end':'middle'});tx.textContent=dShort(x.day)});
+  const col=getComputedStyle(document.documentElement).getPropertyValue('--series').trim(),wash=getComputedStyle(document.documentElement).getPropertyValue('--series-wash').trim(),surf=getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
+  if(kind==='line'){const pts=vals.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1));mk('path',{d:'M'+X(0)+','+Y(0)+' L'+pts.join(' L')+' L'+X(n-1)+','+Y(0)+'Z',fill:wash,stroke:'none'});
+    mk('polyline',{points:pts.join(' '),fill:'none',stroke:col,'stroke-width':2,'stroke-linejoin':'round','stroke-linecap':'round'});
+    mk('circle',{cx:X(n-1),cy:Y(vals[n-1]),r:4.5,fill:col,stroke:surf,'stroke-width':2});const lb=mk('text',{x:X(n-1)-8,y:Y(vals[n-1])-10,'text-anchor':'end',class:'lab'});lb.textContent=fmtN(vals[n-1])+' heute'}
+  else{const bw=Math.min(24,Math.max(2,pw/n-2));vals.forEach((v,i)=>{if(!v)return;const x=X(i)-bw/2,y=Y(v),h=Y(0)-y,r=Math.min(4,bw/2,h);
+      mk('path',{d:'M'+x+','+Y(0)+' V'+(y+r)+' Q'+x+','+y+' '+(x+r)+','+y+' H'+(x+bw-r)+' Q'+(x+bw)+','+y+' '+(x+bw)+','+(y+r)+' V'+Y(0)+' Z',fill:col})});
+    const mi=vals.indexOf(Math.max(...vals));if(vals[mi]>0){const lb=mk('text',{x:X(mi),y:Y(vals[mi])-6,'text-anchor':'middle',class:'lab'});lb.textContent=fmtN(vals[mi])}}
+  const cross=mk('line',{x1:0,x2:0,y1:T,y2:Y(0),stroke:'var(--axis)','stroke-width':1,opacity:0});const dot=kind==='line'?mk('circle',{r:4.5,fill:col,stroke:surf,'stroke-width':2,opacity:0}):null;
+  const hit=mk('rect',{x:L,y:0,width:pw,height:H,fill:'transparent',tabindex:0});box.append(sv);const tip=el('div','tip');box.append(tip);
+  const show=i=>{i=Math.max(0,Math.min(n-1,i));const x=X(i);cross.setAttribute('x1',x);cross.setAttribute('x2',x);cross.setAttribute('opacity',1);if(dot){dot.setAttribute('cx',x);dot.setAttribute('cy',Y(vals[i]));dot.setAttribute('opacity',1)}
+    tip.innerHTML='';tip.append(el('b',null,fmtN(vals[i])),el('span',null,new Date(D[i].day+'T12:00:00').toLocaleDateString('de-AT',{weekday:'short',day:'numeric',month:'short'})));
+    const r=sv.getBoundingClientRect(),k=r.width/W;tip.style.left=Math.max(50,Math.min(r.width-50,x*k))+'px';tip.style.top=(Math.min(Y(vals[i]),T+ph*.5)*k-6)+'px';tip.classList.add('on');hit._i=i};
+  const hide=()=>{cross.setAttribute('opacity',0);if(dot)dot.setAttribute('opacity',0);tip.classList.remove('on')};
+  const idx=e=>{const r=sv.getBoundingClientRect(),px=(e.clientX-r.left)*W/r.width;return kind==='bar'?Math.floor((px-L)/(pw/n)):Math.round((px-L)/(pw/Math.max(1,n-1)))};
+  hit.addEventListener('pointermove',e=>show(idx(e)));hit.addEventListener('pointerleave',hide);hit.addEventListener('focus',()=>show(n-1));hit.addEventListener('blur',hide);
+  hit.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'){show((hit._i??n-1)-1);e.preventDefault()}if(e.key==='ArrowRight'){show((hit._i??n-1)+1);e.preventDefault()}})}
+function hbarCard(title,sub,rows){const c=el('div','card');c.append(el('h2',null,title),el('p','sub',sub));if(!rows.length){c.append(el('p','empty','Noch keine Daten.'));return c}
+  const mx=Math.max(...rows.map(r=>r[1]),1),g=el('div','hbar');rows.slice(0,8).forEach(([k,v])=>{const t=el('div','t');t.style.width=Math.max(1,v/mx*100)+'%';t.title=k+': '+fmtN(v);const wr=el('div');wr.append(t);g.append(el('span','k',k),wr,el('span','n',fmtN(v)))});c.append(g);return c}
+function storageCard(o){const c=el('div','card');c.append(el('h2',null,'Speicher (Supabase)'),el('p','sub','Grenzen im Gratis-Plan: 500 MB Datenbank, 1 GB Fotos'));
+  [['Datenbank',o.db_bytes,500e6],['Fotos (Storage)',o.storage_bytes,1e9]].forEach(([l,b,lim])=>{const m=el('div','meter'),r=el('div','row');const p=b==null?0:Math.min(100,b/lim*100);r.append(el('b',null,l),el('span',null,fmtB(b)+' von '+fmtB(lim)+' · '+Math.round(p)+' %'));
+    const tr=el('div','tr'),fl=el('div','fl'+(p>90?' crit':p>70?' warn':''));fl.style.width=Math.max(1,p)+'%';tr.append(fl);tr.setAttribute('role','meter');tr.setAttribute('aria-valuenow',Math.round(p));tr.setAttribute('aria-valuemin',0);tr.setAttribute('aria-valuemax',100);tr.setAttribute('aria-label',l);m.append(r,tr);c.append(m)});
+  c.append(el('p','sub','Supabase pausiert Gratis-Projekte nach längerer Inaktivität – dann im Dashboard „Restore“ drücken.'));return c}
+
+// ---------- Meldungen ----------
+function reportsSec(){const s=el('section');s.id='reports';const hd=el('div','chead');hd.append(el('h3',null,'Meldungen'),el('span','sp'));const tg=el('button','tbtn',ST.allRep?'Nur offene zeigen':'Auch erledigte zeigen');tg.onclick=()=>{ST.allRep=!ST.allRep;loadAll()};hd.append(tg);s.append(hd);
+  const c=el('div','card');if(!ST.reports.length)c.append(el('p','empty','Keine offenen Meldungen. 👍'));
+  ST.reports.forEach(r=>{const d=el('div','rep');d.append(el('div','meta',new Date(r.created_at).toLocaleString('de-AT')+' · gemeldet von @'+(r.reporter||'?')+' · betrifft @'+(r.target_username||'gelöschtes Konto')+(r.handled?' · erledigt':'')));
+    d.append(el('div','why',r.reason?'Grund: '+r.reason:'Kein Grund angegeben'));
+    if(r.activity)d.append(el('div','ctx',r.act_name||r.act_text?((r.act_mode==='post'?'Beitrag: ':'Aktivität: ')+(r.act_name||'')+(r.act_text?'\n'+r.act_text:'')):'Inhalt nicht mehr vorhanden.'));
+    const a=el('div','acts');
+    if(!r.handled){a.append(btnA('Erledigt (keine Maßnahme)','',()=>act('admin_handle_report',{p_id:r.id,p_handled:true})));
+      if(r.activity&&(r.act_name||r.act_text))a.append(btnA('Inhalt entfernen','danger',()=>act('admin_remove_content',{p_activity:r.activity,p_reason:r.reason||''}),'Inhalt wirklich entfernen?'));
+      if(r.target)a.append(btnA('Konto löschen','danger',()=>act('admin_delete_user',{p_user:r.target}),'Konto @'+(r.target_username||'')+' wirklich löschen? Das kann man nicht rückgängig machen.'))}
+    else a.append(btnA('Wieder öffnen','',()=>act('admin_handle_report',{p_id:r.id,p_handled:false})));
+    if(r.target_email){const m=document.createElement('a');m.className='tbtn';m.style.cssText='display:inline-flex;align-items:center;border:1px solid var(--line);text-decoration:none';
+      m.href='mailto:'+encodeURIComponent(r.target_email)+'?subject='+encodeURIComponent('Linefact: Maßnahme zu deinem Inhalt')+'&body='+encodeURIComponent('Hallo @'+(r.target_username||'')+',\n\nwir haben einen Inhalt deines Linefact-Kontos geprüft.\n\nMaßnahme: [Inhalt entfernt / Konto gelöscht]\nInhalt: '+(r.act_name||r.act_text||'–')+'\nGrund: '+(r.reason||'–')+'\nVerletzte Regel: Nutzungsbedingungen Punkt 4 („Nicht erlaubt“)\nDie Entscheidung wurde von einem Menschen getroffen, nicht automatisch.\n\nWenn du nicht einverstanden bist, antworte einfach auf diese E-Mail – wir prüfen es erneut. Außerdem kannst du dich an die KommAustria wenden oder den Rechtsweg beschreiten.\n\nViele Grüße\nJosef Moosbrugger, Linefact');
+      m.textContent='Begründung per E-Mail';a.append(m)}
+    d.append(a);c.append(d)});s.append(c);return s}
+function btnA(t,cls,fn,confirmTxt){const b=el('button','tbtn '+(cls||''),t);b.type='button';b.onclick=async()=>{if(confirmTxt&&!confirm(confirmTxt))return;b.disabled=true;await fn();b.disabled=false};return b}
+async function act(fn,args){try{await rpc(fn,args);await loadAll()}catch(e){alert(e.message)}}
+
+// ---------- Nutzer & Clubs ----------
+function usersCard(){const c=el('div','card');const hd=el('div','chead');const tt=el('div');tt.append(el('h2',null,'Nutzer'),el('p','sub','Neueste zuerst · aktive Tage und App-Starts der letzten 30 Tage'));hd.append(tt,el('span','sp'));
+  const q=el('input');q.type='search';q.placeholder='Suchen …';q.value=ST.q;q.setAttribute('aria-label','Nutzer suchen');q.style.maxWidth='180px';let tm;q.oninput=()=>{clearTimeout(tm);tm=setTimeout(async()=>{ST.q=q.value.trim();try{ST.users=(await rpc('admin_users',{p_query:ST.q,p_limit:200}))||[];fill()}catch(e){}},300)};hd.append(q);c.append(hd);
+  const w=el('div','tscroll'),t=el('table');t.innerHTML='<thead><tr><th>Benutzer</th><th>Seit</th><th>Zuletzt</th><th class="n">Tage</th><th class="n">Starts</th><th class="n">Geteilt</th><th>Version</th></tr></thead>';const bd=el('tbody');t.append(bd);w.append(t);c.append(w);
+  const fill=()=>{bd.innerHTML='';if(!ST.users.length){const r=el('tr'),d=el('td','empty','Keine Nutzer gefunden.');d.colSpan=7;r.append(d);bd.append(r)}
+    ST.users.forEach(u=>{const r=el('tr');const n=el('td');n.append(el('b',null,'@'+u.username));if(u.is_admin)n.append(' ',el('span','badge','Admin'));const sub=el('div','stamp',[u.display_name,u.email].filter(Boolean).join(' · '));n.append(sub);
+      r.append(n,el('td',null,dLong(u.created_at)),el('td',null,u.last_day?dLong(u.last_day):'–'),el('td','n',fmtN(u.days_30)),el('td','n',fmtN(u.opens_30)),el('td','n',fmtN(u.shared)),el('td',null,u.version||'–'));bd.append(r)})};fill();return c}
+function clubsCard(){const c=el('div','card');c.append(el('h2',null,'Clubs'),el('p','sub','Nach Mitgliedern'));if(!ST.clubs.length){c.append(el('p','empty','Noch keine Clubs.'));return c}
+  const w=el('div','tscroll'),t=el('table');t.innerHTML='<thead><tr><th>Club</th><th class="n">Mitgl.</th><th class="n">Beitr.</th><th class="n">Strecken</th></tr></thead>';const bd=el('tbody');
+  ST.clubs.forEach(g=>{const r=el('tr');r.append(el('td',null,g.name),el('td','n',fmtN(g.members)),el('td','n',fmtN(g.posts)),el('td','n',fmtN((g.tracks||0)+(g.courses||0))));bd.append(r)});t.append(bd);w.append(t);c.append(w);return c}
+
+// ---------- Schnellzugriff ----------
+function linksSec(){const s=el('section');s.append(el('h3',null,'Schnellzugriff'));const c=el('div','card');const g=el('div','links');
+  CFG.links.forEach(L=>{const d=el('div','lgrp');d.append(el('h4',null,L.g));L.items.forEach(([t,u,h])=>{const a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener';a.append(document.createTextNode(t),el('span',null,h+' ↗'));d.append(a)});g.append(d)});
+  const d=el('div','lgrp');d.append(el('h4',null,'Kontakt'));const a=document.createElement('a');a.href='mailto:'+CFG.mail;a.append(document.createTextNode('Support-Postfach'),el('span',null,CFG.mail));d.append(a);g.append(d);c.append(g);s.append(c);return s}
+
+try{const t=localStorage.getItem('lfa_theme');if(t)document.documentElement.dataset.theme=t}catch(e){}
+let rT;addEventListener('resize',()=>{clearTimeout(rT);rT=setTimeout(()=>{if(ST.o)render()},200)});
+start();
+</script>
+</body>
+</html>
