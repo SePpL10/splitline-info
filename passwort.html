@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Linefact – neues Passwort</title>
+<style>
+:root{color-scheme:light;--page:#F2F3EF;--card:#fff;--ink:#121418;--ink2:#5C636B;--line:#E3E4DF;--accent:#1E50FF;--bad:#C4362B;--good:#17853F}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--page:#0E0F11;--card:#17191D;--ink:#F0F1F2;--ink2:#B9BDC3;--line:#2A2D33;--accent:#5B7FFF;--bad:#FF6B5E;--good:#3CC46B}}
+:root[data-theme="dark"]{color-scheme:dark;--page:#0E0F11;--card:#17191D;--ink:#F0F1F2;--ink2:#B9BDC3;--line:#2A2D33;--accent:#5B7FFF;--bad:#FF6B5E;--good:#3CC46B}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:420px;margin:0 auto;padding:12vh 16px 40px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.3rem;margin-bottom:18px}
+.logo{width:36px;height:36px;border-radius:10px;background:#1E50FF;display:grid;place-items:center;overflow:hidden}
+.logo svg{width:100%;height:100%}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
+h1{font-size:1.25rem;margin:0 0 6px}
+p{margin:0 0 12px;color:var(--ink2)}
+label{display:block;font-size:.9rem;font-weight:600;margin:14px 0 5px}
+input{width:100%;font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{width:100%;margin-top:18px;min-height:48px;border:0;border-radius:12px;background:var(--accent);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+button:disabled{opacity:.6}
+.msg{margin-top:14px;font-weight:600}
+.msg.err{color:var(--bad)}.msg.ok{color:var(--good)}
+.foot{margin-top:18px;font-size:.85rem;color:var(--ink2);text-align:center}
+.foot a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><span class="logo"><svg viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="2.2"><path d="M50 16 C71 14 86 30 84 51 C82 72 65 86 46 84 C25 82 14 65 18 46 C21 29 33 17 50 16 Z" stroke-opacity=".18"/><path d="M50 29 C64 28 73 38 72 51 C71 63 61 72 48 71 C35 70 28 61 30 48 C32 37 40 30 50 29 Z" stroke-opacity=".27"/><path d="M50 41 C56 41 60 45 60 50 C60 56 55 60 49 59 C44 58 41 54 42 49 C43 44 46 41 50 41 Z" stroke-opacity=".38"/></g><path d="M21 79 79 21" stroke="#fff" stroke-width="8.5" stroke-linecap="round"/><circle cx="50" cy="50" r="5.4" fill="#121418"/></svg></span>Linefact</div>
+  <div class="card" id="box">
+    <h1>Neues Passwort setzen</h1>
+    <p id="intro">Wähle ein neues Passwort für dein Linefact-Konto.</p>
+    <form id="f" hidden>
+      <label for="p1">Neues Passwort</label><input id="p1" type="password" autocomplete="new-password" minlength="8" required>
+      <label for="p2">Neues Passwort wiederholen</label><input id="p2" type="password" autocomplete="new-password" minlength="8" required>
+      <button type="submit" id="go">Passwort speichern</button>
+    </form>
+    <p class="msg" id="msg" role="alert"></p>
+  </div>
+  <p class="foot">Fragen? <a href="mailto:linefact.main@gmail.com">linefact.main@gmail.com</a> · <a href="./#datenschutz">Datenschutz</a></p>
+</main>
+<script>
+const SB_URL='https://pgkkbzozlufbzcdtkbrb.supabase.co',SB_KEY='sb_publishable_oizBlM6hGJoDkOjSbtd9Aw_ydfWCJRb';
+const $=id=>document.getElementById(id);
+const msg=(t,ok)=>{$('msg').textContent=t||'';$('msg').className='msg '+(ok?'ok':'err')};
+// Supabase hängt die Anmeldung für den Link an die Adresse an (#access_token=…&type=recovery)
+const H=new URLSearchParams(location.hash.slice(1)),Q=new URLSearchParams(location.search);
+const token=H.get('access_token'),err=H.get('error_description')||Q.get('error_description');
+if(token||err)history.replaceState(null,'',location.pathname);
+if(err){$('intro').textContent='';msg('Der Link ist ungültig oder abgelaufen. Tippe in der App nochmal auf „Passwort vergessen?“, dann bekommst du einen neuen Link.')}
+else if(!token){$('intro').textContent='';msg('Öffne diese Seite über den Link in der E-Mail „Passwort zurücksetzen“. Den Link bekommst du in der App unter Anmelden › „Passwort vergessen?“.')}
+else{$('f').hidden=false;$('p1').focus()}
+$('f').onsubmit=async e=>{e.preventDefault();const a=$('p1').value,b=$('p2').value;
+  if(a.length<8){msg('Das Passwort braucht mindestens 8 Zeichen.');return}if(a!==b){msg('Die beiden Passwörter sind nicht gleich.');return}
+  $('go').disabled=true;msg('');
+  try{const r=await fetch(SB_URL+'/auth/v1/user',{method:'PUT',headers:{apikey:SB_KEY,'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({password:a})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){const c=j.error_code||j.code;msg(c==='same_password'?'Das neue Passwort muss anders sein als das alte.':c==='weak_password'?'Dieses Passwort ist zu schwach. Nimm ein längeres.':r.status===401||r.status===403?'Der Link ist abgelaufen. Fordere in der App einen neuen an.':'Das hat nicht geklappt. Bitte später nochmal.');$('go').disabled=false;return}
+    $('f').hidden=true;$('intro').textContent='';msg('Fertig! Dein Passwort ist geändert. Öffne Linefact und melde dich mit dem neuen Passwort an.',true)}
+  catch(x){msg('Keine Verbindung. Prüf dein Internet und versuch es nochmal.');$('go').disabled=false}};
+</script>
+</body>
+</html>

@@ -29,8 +29,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 input,select{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px;min-height:38px}
 .wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
 header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
-.logo{width:34px;height:34px;border-radius:9px;background:var(--accent);display:grid;place-items:center;flex:none}
-.logo svg{width:20px;height:20px}
+.logo{width:34px;height:34px;border-radius:9px;background:#1E50FF;display:grid;place-items:center;flex:none;overflow:hidden}
+.logo svg{width:100%;height:100%}
 .brand{font-weight:750;font-size:1.25rem;letter-spacing:-.01em}
 .brand small{font-weight:500;color:var(--muted);font-size:.85rem;margin-left:6px}
 .sp{flex:1}
@@ -45,7 +45,7 @@ header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom
 .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .g6{grid-template-columns:repeat(6,minmax(0,1fr))}
 @media (max-width:980px){.g-hero{grid-template-columns:repeat(2,minmax(0,1fr))}.g6{grid-template-columns:repeat(3,minmax(0,1fr))}.g3{grid-template-columns:1fr 1fr}}
-@media (max-width:640px){.g-hero,.g3,.g2{grid-template-columns:1fr}.g6{grid-template-columns:1fr 1fr}}
+@media (max-width:640px){.g-hero,.g3{grid-template-columns:1fr 1fr}.g-hero .hero{grid-column:1/-1}.g2{grid-template-columns:1fr}.g6{grid-template-columns:1fr 1fr}.tile .val{font-size:1.5rem}.tile .hint{font-size:.72rem}}
 .card{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);border:1px solid var(--ring);padding:16px;min-width:0}
 .card h2{font-size:.95rem;margin:0 0 2px;font-weight:650}
 .card .sub{color:var(--muted);font-size:.82rem;margin:0 0 10px}
@@ -67,7 +67,7 @@ header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom
 .mini .val{font-size:1.35rem;font-weight:650}
 .mini .lbl{color:var(--ink-2);font-size:.8rem}
 section{margin-top:22px}
-section>h3{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:700}
+section>h3,section>.chead h3{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:700}
 .chart{position:relative;width:100%}
 .chart svg{display:block;width:100%;height:auto;overflow:visible}
 .chart .grid line{stroke:var(--line);stroke-width:1}
@@ -104,6 +104,8 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .rep .why{font-weight:600}
 .rep .ctx{background:var(--surface-2);border-radius:10px;padding:8px 10px;font-size:.85rem;white-space:pre-wrap;word-break:break-word}
 .rep .acts{display:flex;gap:6px;flex-wrap:wrap}
+.anta{width:100%;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical}
+.tbtn.on{background:color-mix(in srgb,var(--good) 14%,transparent)}
 .empty{color:var(--muted);font-size:.9rem;padding:8px 0}
 .err{color:var(--crit)}
 .login{max-width:380px;margin:12vh auto 0;padding:0 16px}
@@ -127,7 +129,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 const CFG={
   sbUrl:'https://pgkkbzozlufbzcdtkbrb.supabase.co',
   sbKey:'sb_publishable_oizBlM6hGJoDkOjSbtd9Aw_ydfWCJRb',
-  mail:'josef.mo@gmx.at',
+  mail:'linefact.main@gmail.com',
   links:[
     {g:'GitHub',items:[['App (iPhone)','https://github.com/SePpL10/Splitline-Beta','Repo'],['Apple-Watch-App','https://github.com/SePpL10/Linefact-Watch','Repo'],['Webseite','https://github.com/SePpL10/splitline-info','Repo']]},
     {g:'Supabase (Datenbank)',items:[['Projekt','https://supabase.com/dashboard/project/pgkkbzozlufbzcdtkbrb','Übersicht'],['Tabellen','https://supabase.com/dashboard/project/pgkkbzozlufbzcdtkbrb/editor','Editor'],['SQL Editor','https://supabase.com/dashboard/project/pgkkbzozlufbzcdtkbrb/sql/new','Neu'],['Konten','https://supabase.com/dashboard/project/pgkkbzozlufbzcdtkbrb/auth/users','Auth'],['Fotos','https://supabase.com/dashboard/project/pgkkbzozlufbzcdtkbrb/storage/buckets','Storage'],['Logs','https://supabase.com/dashboard/project/pgkkbzozlufbzcdtkbrb/logs/explorer','Fehler']]},
@@ -164,7 +166,7 @@ function showLogin(msg){const a=$('#app');a.innerHTML='';const w=el('div','login
     try{const j=await req('/auth/v1/token?grant_type=password',{email:f.querySelector('#lm').value.trim(),password:f.querySelector('#lp').value},null);SES={at:j.access_token,rt:j.refresh_token,exp:Date.now()+j.expires_in*1000};ss.set('lfa_ses',SES);start()}
     catch(x){f.querySelector('#le').textContent=/invalid/i.test(x.message)?'E-Mail oder Passwort stimmt nicht.':x.message;b.disabled=false}}}
 function logout(){ss.del('lfa_ses');SES=null;showLogin()}
-function logo(){const d=el('div','logo');d.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M15 4l-3.2 4.6M9.2 15.4L6 20"/><circle cx="12.5" cy="12" r="1.6" fill="#111" stroke="none"/></svg>';return d}
+function logo(){const d=el('div','logo');d.innerHTML='<svg viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="2.2"><path d="M50 16 C71 14 86 30 84 51 C82 72 65 86 46 84 C25 82 14 65 18 46 C21 29 33 17 50 16 Z" stroke-opacity=".18"/><path d="M50 29 C64 28 73 38 72 51 C71 63 61 72 48 71 C35 70 28 61 30 48 C32 37 40 30 50 29 Z" stroke-opacity=".27"/><path d="M50 41 C56 41 60 45 60 50 C60 56 55 60 49 59 C44 58 41 54 42 49 C43 44 46 41 50 41 Z" stroke-opacity=".38"/></g><path d="M21 79 79 21" stroke="#fff" stroke-width="8.5" stroke-linecap="round"/><circle cx="50" cy="50" r="5.4" fill="#121418"/></svg>';return d}
 
 // ---------- Laden ----------
 async function start(){if(!SES){showLogin();return}
@@ -172,8 +174,8 @@ async function start(){if(!SES){showLogin();return}
   catch(e){if(e.status===400||e.status===401){logout();return}showLogin(e.message);return}
   shell();await loadAll()}
 async function loadAll(){const m=$('#main');if(m)m.classList.add('loading');
-  try{const[o,d,u,r,c]=await Promise.all([rpc('admin_overview'),rpc('admin_daily',{p_days:ST.days}),rpc('admin_users',{p_query:ST.q,p_limit:200}),rpc('admin_reports',{p_all:ST.allRep}),rpc('admin_clubs')]);
-    ST.o=o;ST.d=d||[];ST.users=u||[];ST.reports=r||[];ST.clubs=c||[];ST.err='';ST.at=new Date()}
+  try{const[o,d,u,r,c,an]=await Promise.all([rpc('admin_overview'),rpc('admin_daily',{p_days:ST.days}),rpc('admin_users',{p_query:ST.q,p_limit:200}),rpc('admin_reports',{p_all:ST.allRep}),rpc('admin_clubs'),rpc('get_announcements',{p_limit:20}).catch(()=>[])]);
+    ST.o=o;ST.d=d||[];ST.users=u||[];ST.reports=r||[];ST.clubs=c||[];ST.ann=an||[];ST.err='';ST.at=new Date()}
   catch(e){ST.err=e.code==='PGRST202'?'Die Datenbank ist nicht aktuell: Bitte die neue SQL-Datei in Supabase ausführen.':e.message}
   render();if(m)m.classList.remove('loading')}
 
@@ -202,13 +204,14 @@ function render(){const m=$('#main');if(!m)return;m.innerHTML='';$('#stamp').tex
   s1.append(cg);m.append(s1);
   // Inhalte
   const s2=el('section');s2.append(el('h3',null,'Inhalte'));const ig=el('div','grid g6');
-  [['Aktivitäten geteilt',o.activities,'+'+fmtN(o.activities_30)+' in 30 T.'],['Beiträge',o.posts],['Kommentare',o.comments],['✊🏼 Gefällt mir',o.likes],['Abos',o.follows],['Clubs',o.clubs,fmtN(o.club_members)+' Mitglieder'],
-   ['MX-Strecken',o.mx_tracks],['Race-Strecken',o.race_courses],['Rekorde',o.records],['Gekoppelte Uhren',o.devices],['Uhr-Fahrten wartend',o.device_rides,'noch nicht abgeholt'],['Datenbank',o.schema,'SQL-Stand']].forEach(([l,v,h])=>{const c=el('div','card mini');c.append(el('div','val',typeof v==='number'?compact(v):String(v||'–')),el('div','lbl',l));if(h)c.append(el('div','lbl',h));ig.append(c)});
+  [['Aktivitäten geteilt',o.activities,'+'+fmtN(o.activities_30)+' in 30 T.'],['Beiträge',o.posts],['Kommentare',o.comments],['Gefällt mir',o.likes],['Abos',o.follows],['Clubs',o.clubs,fmtN(o.club_members)+' Mitglieder'],
+   ['MX-Strecken',o.mx_tracks],['Race-Strecken',o.race_courses],['Rekorde',o.records],['Gekoppelte Uhren',o.devices],['Uhr-Fahrten wartend',o.device_rides,'noch nicht abgeholt'],['Pro-Abos (Apple)',o.pro_apple,(o.pro_yearly||0)+' jährlich · '+(o.pro_trial||0)+' im Gratismonat'],['Pro geschenkt',o.pro_gift],['Geräte mit Push',o.push_devices],['Push (24 h)',o.push_sent,'gesendet'],['Kommende Events',o.events],['Datenbank',o.schema,'SQL-Stand']].forEach(([l,v,h])=>{const c=el('div','card mini');c.append(el('div','val',typeof v==='number'?compact(v):String(v||'–')),el('div','lbl',l));if(h)c.append(el('div','lbl',h));ig.append(c)});
   s2.append(ig);const g3=el('div','grid g3');g3.style.marginTop='14px';
   const MN={mx:'Motocross',enduro:'Enduro',race:'Enduro Race',post:'Beiträge'};
   g3.append(hbarCard('Geteilt nach Art','alle Zeit',Object.entries(o.modes||{}).map(([k,v])=>[MN[k]||k,v]).sort((a,b)=>b[1]-a[1])),
     hbarCard('App-Versionen','Nutzer je Version, letzte 30 Tage',(o.versions||[]).map(x=>[x.version,x.users])),storageCard(o));s2.append(g3);m.append(s2);
   // Meldungen
+  m.append(annSec());
   m.append(reportsSec());
   // Nutzer + Clubs
   const s4=el('section');s4.append(el('h3',null,'Nutzer und Clubs'));const ug=el('div','grid');ug.style.gridTemplateColumns='minmax(0,2fr) minmax(0,1fr)';if(innerWidth<900)ug.style.gridTemplateColumns='1fr';ug.append(usersCard(),clubsCard());s4.append(ug);m.append(s4);
@@ -218,7 +221,7 @@ function repTile(n){const c=el('div','card tile'+(n?' alert':''));c.append(el('d
   const b=el('span','badge '+(n?'crit':'good'),n?'⚠ bitte prüfen (in der Regel binnen 24 h)':'✓ alles erledigt');c.append(b);if(n){c.style.cursor='pointer';c.onclick=()=>document.getElementById('reports').scrollIntoView({behavior:'smooth'})}return c}
 
 // ---------- Diagramme (eine Reihe je Diagramm, Hover + Tabelle) ----------
-function niceMax(v){if(v<=4)return 4;const p=Math.pow(10,Math.floor(Math.log10(v))),f=v/p;return(f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p}
+function niceMax(v){const raw=Math.max(1,v)/4,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p,st=Math.max(1,(f<=1?1:f<=2?2:f<=5?5:10)*p);return st*4}
 function chartCard(title,sub,D,key,kind){const c=el('div','card');const hd=el('div','chead');const tt=el('div');tt.append(el('h2',null,title),el('p','sub',sub));
   const tb=el('button','tbtn','Tabelle');tb.type='button';tb.setAttribute('aria-pressed','false');hd.append(tt,el('span','sp'),tb);c.append(hd);
   const box=el('div','chart');c.append(box);const tab=el('div','tscroll');tab.hidden=true;c.append(tab);
@@ -257,7 +260,7 @@ function storageCard(o){const c=el('div','card');c.append(el('h2',null,'Speicher
 
 // ---------- Meldungen ----------
 function reportsSec(){const s=el('section');s.id='reports';const hd=el('div','chead');hd.append(el('h3',null,'Meldungen'),el('span','sp'));const tg=el('button','tbtn',ST.allRep?'Nur offene zeigen':'Auch erledigte zeigen');tg.onclick=()=>{ST.allRep=!ST.allRep;loadAll()};hd.append(tg);s.append(hd);
-  const c=el('div','card');if(!ST.reports.length)c.append(el('p','empty','Keine offenen Meldungen. 👍'));
+  const c=el('div','card');if(!ST.reports.length)c.append(el('p','empty','Keine offenen Meldungen.'));
   ST.reports.forEach(r=>{const d=el('div','rep');d.append(el('div','meta',new Date(r.created_at).toLocaleString('de-AT')+' · gemeldet von @'+(r.reporter||'?')+' · betrifft @'+(r.target_username||'gelöschtes Konto')+(r.handled?' · erledigt':'')));
     d.append(el('div','why',r.reason?'Grund: '+r.reason:'Kein Grund angegeben'));
     if(r.activity)d.append(el('div','ctx',r.act_name||r.act_text?((r.act_mode==='post'?'Beitrag: ':'Aktivität: ')+(r.act_name||'')+(r.act_text?'\n'+r.act_text:'')):'Inhalt nicht mehr vorhanden.'));
@@ -276,13 +279,35 @@ async function act(fn,args){try{await rpc(fn,args);await loadAll()}catch(e){aler
 // ---------- Nutzer & Clubs ----------
 function usersCard(){const c=el('div','card');const hd=el('div','chead');const tt=el('div');tt.append(el('h2',null,'Nutzer'),el('p','sub','Neueste zuerst · aktive Tage und App-Starts der letzten 30 Tage'));hd.append(tt,el('span','sp'));
   const q=el('input');q.type='search';q.placeholder='Suchen …';q.value=ST.q;q.setAttribute('aria-label','Nutzer suchen');q.style.maxWidth='180px';let tm;q.oninput=()=>{clearTimeout(tm);tm=setTimeout(async()=>{ST.q=q.value.trim();try{ST.users=(await rpc('admin_users',{p_query:ST.q,p_limit:200}))||[];fill()}catch(e){}},300)};hd.append(q);c.append(hd);
-  const w=el('div','tscroll'),t=el('table');t.innerHTML='<thead><tr><th>Benutzer</th><th>Seit</th><th>Zuletzt</th><th class="n">Tage</th><th class="n">Starts</th><th class="n">Geteilt</th><th>Version</th></tr></thead>';const bd=el('tbody');t.append(bd);w.append(t);c.append(w);
-  const fill=()=>{bd.innerHTML='';if(!ST.users.length){const r=el('tr'),d=el('td','empty','Keine Nutzer gefunden.');d.colSpan=7;r.append(d);bd.append(r)}
-    ST.users.forEach(u=>{const r=el('tr');const n=el('td');n.append(el('b',null,'@'+u.username));if(u.is_admin)n.append(' ',el('span','badge','Admin'));const sub=el('div','stamp',[u.display_name,u.email].filter(Boolean).join(' · '));n.append(sub);
-      r.append(n,el('td',null,dLong(u.created_at)),el('td',null,u.last_day?dLong(u.last_day):'–'),el('td','n',fmtN(u.days_30)),el('td','n',fmtN(u.opens_30)),el('td','n',fmtN(u.shared)),el('td',null,u.version||'–'));bd.append(r)})};fill();return c}
-function clubsCard(){const c=el('div','card');c.append(el('h2',null,'Clubs'),el('p','sub','Nach Mitgliedern'));if(!ST.clubs.length){c.append(el('p','empty','Noch keine Clubs.'));return c}
-  const w=el('div','tscroll'),t=el('table');t.innerHTML='<thead><tr><th>Club</th><th class="n">Mitgl.</th><th class="n">Beitr.</th><th class="n">Strecken</th></tr></thead>';const bd=el('tbody');
-  ST.clubs.forEach(g=>{const r=el('tr');r.append(el('td',null,g.name),el('td','n',fmtN(g.members)),el('td','n',fmtN(g.posts)),el('td','n',fmtN((g.tracks||0)+(g.courses||0))));bd.append(r)});t.append(bd);w.append(t);c.append(w);return c}
+  const w=el('div','tscroll'),t=el('table');t.innerHTML='<thead><tr><th>Benutzer</th><th>Seit</th><th>Zuletzt</th><th class="n">Tage</th><th class="n">Starts</th><th class="n">Geteilt</th><th>Version</th><th>Pro</th></tr></thead>';const bd=el('tbody');t.append(bd);w.append(t);c.append(w);
+  const fill=()=>{bd.innerHTML='';if(!ST.users.length){const r=el('tr'),d=el('td','empty','Keine Nutzer gefunden.');d.colSpan=8;r.append(d);bd.append(r)}
+    ST.users.slice(0,ST.uN||25).forEach(u=>{const r=el('tr');const n=el('td');n.append(el('b',null,'@'+u.username));if(u.is_admin)n.append(' ',el('span','badge','Admin'));const sub=el('div','stamp',[u.display_name,u.email].filter(Boolean).join(' · '));n.append(sub);
+      r.append(n,el('td',null,dLong(u.created_at)),el('td',null,u.last_day?dLong(u.last_day):'–'),el('td','n',fmtN(u.days_30)),el('td','n',fmtN(u.opens_30)),el('td','n',fmtN(u.shared)),el('td',null,u.version||'–'),proCell(u));bd.append(r)});more.hidden=ST.users.length<=(ST.uN||25);more.textContent='Mehr zeigen ('+(ST.users.length-(ST.uN||25))+' weitere)'};
+  const more=el('button','tbtn');more.style.marginTop='10px';more.onclick=()=>{ST.uN=(ST.uN||25)+50;fill()};c.append(more);fill();return c}
+function proCell(u){const d=el('td');const k=u.pro||'';
+  d.append(el('span','badge'+(k?' good':''),k==='admin'?'Admin':k==='gift'?'Geschenkt':k==='apple'?'Abo':'–'));
+  if(k&&k!=='admin'&&u.pro_until)d.append(el('div','stamp',String(u.pro_until).startsWith('infinity')?'unbegrenzt':'bis '+dLong(u.pro_until)));
+  if(k!=='admin'){if(k==='gift')d.append(' ',btnA('Weg','',()=>act('admin_set_pro',{p_user:u.id,p_days:0}),'Geschenktes Pro für @'+u.username+' entfernen?'));
+    else if(!k)d.append(' ',btnA('Schenken','',async()=>{const v=prompt('Linefact Pro für @'+u.username+' schenken – wie viele Tage? (leer = unbegrenzt)','');if(v===null)return;const n=v.trim()===''?-1:parseInt(v,10);if(!(n===-1||n>0)){alert('Bitte eine Zahl eingeben.');return}await act('admin_set_pro',{p_user:u.id,p_days:n})}))}
+  return d}
+function clubsCard(){const c=el('div','card');c.append(el('h2',null,'Clubs'),el('p','sub','„Offiziell“ zeigt in der App ein blaues Abzeichen beim Club (z. B. echter Verein, geprüft).'));if(!ST.clubs.length){c.append(el('p','empty','Noch keine Clubs.'));return c}
+  const w=el('div','tscroll'),t=el('table');t.innerHTML='<thead><tr><th>Club</th><th class="n">Mitgl.</th><th class="n">Beitr.</th><th class="n">Strecken</th><th>Offiziell</th></tr></thead>';const bd=el('tbody');
+  ST.clubs.forEach(g=>{const r=el('tr');const nm=el('td',null,g.name);if(g.official)nm.append(' ',el('span','badge good','✓ Offiziell'));
+    const tg=el('button','tbtn'+(g.official?' on':''),g.official?'Aus':'Offiziell');tg.type='button';tg.setAttribute('aria-pressed',String(!!g.official));tg.setAttribute('aria-label',(g.official?'Offiziell entfernen: ':'Offiziell schalten: ')+g.name);
+    tg.onclick=async()=>{if(!g.official&&!confirm('„'+g.name+'“ als offiziellen Club kennzeichnen?'))return;tg.disabled=true;await act('admin_set_official',{p_group:g.id,p_on:!g.official})};const tc=el('td');tc.append(tg);
+    r.append(nm,el('td','n',fmtN(g.members)),el('td','n',fmtN(g.posts)),el('td','n',fmtN((g.tracks||0)+(g.courses||0))),tc);bd.append(r)});t.append(bd);w.append(t);c.append(w);return c}
+// ---------- Offizielle Beiträge (sieht jeder angemeldete Nutzer im Feed) ----------
+function annSec(){const s=el('section');s.append(el('h3',null,'Offizielle Beiträge'));const c=el('div','card');
+  c.append(el('p','sub','Erscheinen bei allen angemeldeten Nutzern als blauer Banner unter Aktivität › Alle (die ersten 7 Tage oben angeheftet).'));
+  const ta=document.createElement('textarea');ta.rows=4;ta.maxLength=2000;ta.placeholder='Text, z. B. „Neu in Version 1.0.46: …“';ta.setAttribute('aria-label','Text des offiziellen Beitrags');ta.className='anta';
+  const go=el('button','primary','Veröffentlichen');go.type='button';const info=el('p','sub');
+  const pl=el('label');pl.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0 0;font-size:.92rem';const pc=document.createElement('input');pc.type='checkbox';pc.id='annPush';pl.append(pc,document.createTextNode('Auch als Push-Mitteilung schicken (höchstens 1× pro Tag, die ersten 150 Zeichen)'));
+  go.onclick=async()=>{const t=ta.value.trim();if(!t){info.textContent='Bitte zuerst einen Text schreiben.';return}if(!confirm(pc.checked?'Diesen Beitrag an alle Nutzer veröffentlichen UND als Push-Mitteilung schicken?':'Diesen Beitrag an alle Nutzer veröffentlichen?'))return;go.disabled=true;
+    try{await rpc('admin_post_announcement',{p_text:t,p_push:pc.checked});ta.value='';pc.checked=false;await loadAll()}catch(e){info.textContent=/push_limit/.test(e.message)?'Heute wurde schon eine Push-Mitteilung geschickt. Ohne Haken geht es sofort, mit Haken morgen wieder.':e.message;go.disabled=false}};
+  const row=el('div');row.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0 4px';row.append(go,info);c.append(ta,pl,row);
+  if(!(ST.ann||[]).length)c.append(el('p','empty','Noch keine offiziellen Beiträge.'));
+  (ST.ann||[]).forEach(a=>{const d=el('div','rep');d.append(el('div','meta',new Date(a.created_at).toLocaleString('de-AT')),el('div','ctx',a.body));const ac=el('div','acts');ac.append(btnA('Löschen','danger',()=>act('admin_delete_announcement',{p_id:a.id}),'Diesen Beitrag für alle löschen?'));d.append(ac);c.append(d)});
+  s.append(c);return s}
 
 // ---------- Schnellzugriff ----------
 function linksSec(){const s=el('section');s.append(el('h3',null,'Schnellzugriff'));const c=el('div','card');const g=el('div','links');
