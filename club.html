@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Linefact – Club beitreten</title>
+<style>
+:root{color-scheme:light;--page:#F2F3EF;--card:#fff;--ink:#121418;--ink2:#5C636B;--line:#E3E4DF;--accent:#1E50FF;--bad:#C4362B;--good:#17853F}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--page:#0E0F11;--card:#17191D;--ink:#F0F1F2;--ink2:#B9BDC3;--line:#2A2D33;--accent:#5B7FFF;--bad:#FF6B5E;--good:#3CC46B}}
+:root[data-theme="dark"]{color-scheme:dark;--page:#0E0F11;--card:#17191D;--ink:#F0F1F2;--ink2:#B9BDC3;--line:#2A2D33;--accent:#5B7FFF;--bad:#FF6B5E;--good:#3CC46B}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:420px;margin:0 auto;padding:12vh 16px 40px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.3rem;margin-bottom:18px}
+.logo{width:36px;height:36px;border-radius:10px;background:#1E50FF;display:grid;place-items:center;overflow:hidden}
+.logo svg{width:100%;height:100%}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
+h1{font-size:1.25rem;margin:0 0 6px}
+p{margin:0 0 12px;color:var(--ink2)}
+label{display:block;font-size:.9rem;font-weight:600;margin:14px 0 5px}
+input{width:100%;font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{width:100%;margin-top:18px;min-height:48px;border:0;border-radius:12px;background:var(--accent);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+button:disabled{opacity:.6}
+.msg{margin-top:14px;font-weight:600}
+.msg.err{color:var(--bad)}.msg.ok{color:var(--good)}
+.foot{margin-top:18px;font-size:.85rem;color:var(--ink2);text-align:center}
+.foot a{color:var(--accent)}
+
+.code{font-family:ui-monospace,Menlo,monospace;font-size:1.35rem;font-weight:700;letter-spacing:.08em;text-align:center;background:var(--page);border:1px dashed var(--line);border-radius:12px;padding:12px;margin:14px 0 4px;color:var(--ink)}
+a.btn{display:flex;align-items:center;justify-content:center;min-height:50px;margin-top:16px;border-radius:12px;background:var(--accent);color:#fff;font-weight:700;text-decoration:none}
+a.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+ol{margin:6px 0 0;padding-left:20px;color:var(--ink2)}ol li{margin:4px 0}
+.small{font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><span class="logo"><svg viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="2.2"><path d="M50 16 C71 14 86 30 84 51 C82 72 65 86 46 84 C25 82 14 65 18 46 C21 29 33 17 50 16 Z" stroke-opacity=".18"/><path d="M50 29 C64 28 73 38 72 51 C71 63 61 72 48 71 C35 70 28 61 30 48 C32 37 40 30 50 29 Z" stroke-opacity=".27"/><path d="M50 41 C56 41 60 45 60 50 C60 56 55 60 49 59 C44 58 41 54 42 49 C43 44 46 41 50 41 Z" stroke-opacity=".38"/></g><path d="M21 79 79 21" stroke="#fff" stroke-width="8.5" stroke-linecap="round"/><circle cx="50" cy="50" r="5.4" fill="#121418"/></svg></span>Linefact</div>
+  <div class="card" id="box">
+    <h1>Club beitreten</h1>
+    <p id="intro">Du wurdest per QR-Code in einen Linefact-Club eingeladen.</p>
+    <div id="ok" hidden>
+      <div class="code" id="code" aria-label="Club-Code"></div>
+      <a class="btn" id="open" href="#">In Linefact öffnen</a>
+      <p class="small" style="margin-top:16px">Klappt der Knopf nicht?</p>
+      <ol class="small">
+        <li>Linefact öffnen (falls noch nicht installiert: im App Store „Linefact“ suchen).</li>
+        <li>Aktivität › <b>Clubs</b> › bei „Club suchen“ den Code oben eingeben › <b>Beitreten</b>.</li>
+      </ol>
+      <p class="small" style="margin-top:12px">Zum Beitreten brauchst du ein Linefact-Konto mit Linefact Pro.</p>
+    </div>
+    <p class="msg err" id="bad" role="alert" hidden>Dieser Link ist unvollständig. Bitte scanne den QR-Code noch einmal.</p>
+  </div>
+  <p class="foot">Fragen? <a href="mailto:linefact.main@gmail.com">linefact.main@gmail.com</a> · <a href="./#datenschutz">Datenschutz</a></p>
+</main>
+<script>
+(function(){
+  var raw=(location.hash||'').replace(/^#/,'')||(new URLSearchParams(location.search).get('c')||'');
+  var c=raw.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(c.length!==12){document.getElementById('bad').hidden=false;document.getElementById('intro').hidden=true;return}
+  document.getElementById('code').textContent=c.slice(0,4)+'-'+c.slice(4,8)+'-'+c.slice(8);
+  var link='linefact://club/'+c;document.getElementById('open').href=link;document.getElementById('ok').hidden=false;
+})();
+</script>
+</body>
+</html>

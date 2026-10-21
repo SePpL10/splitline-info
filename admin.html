@@ -102,9 +102,19 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .rep:first-child{border-top:0}
 .rep .meta{color:var(--muted);font-size:.8rem}
 .rep .why{font-weight:600}
-.rep .ctx{background:var(--surface-2);border-radius:10px;padding:8px 10px;font-size:.85rem;white-space:pre-wrap;word-break:break-word}
+.rep .ctx{background:var(--surface-2);border-radius:10px;padding:8px 10px;font-size:.85rem;word-break:break-word}
 .rep .acts{display:flex;gap:6px;flex-wrap:wrap}
+.annl{display:flex;flex-direction:column;gap:4px;margin:8px 0;font-size:.85rem;font-weight:600}
+.anin{width:100%;font:inherit;font-weight:400;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 10px}
+.anntb{display:flex;gap:6px;margin:4px 0}.anntb .tbtn{min-width:36px;font-weight:800}
+.annprev{margin-top:12px}.apcard{max-width:380px;border-radius:18px;overflow:hidden;background:linear-gradient(135deg,#1E50FF,#1438C8);color:#fff;margin-top:6px}
+.apbar{display:flex;gap:10px;align-items:center;padding:12px 14px 0}.apbar .apav{width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-weight:800}
+.apbar b{display:block;letter-spacing:.08em;font-size:.9rem}.apbar small{opacity:.85;font-size:.75rem}
+.apcard img{display:block;width:100%;max-height:300px;object-fit:cover;margin-top:10px}.apbody{padding:10px 14px 14px;display:flex;flex-direction:column;gap:6px}.apbody h3{margin:0;font-size:1.1rem;color:#fff}
+.aptext p,.aptext ul,.aptext h4{margin:0 0 6px}.aptext a{color:#fff}.apbtn{align-self:flex-start;background:#fff;color:#1E50FF;border-radius:999px;padding:7px 14px;font-weight:800}
+.rep .ctx p,.rep .ctx ul,.rep .ctx h4{margin:0 0 4px}
 .anta{width:100%;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical}
+.clubnm b{display:block}.clubst{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:5px}.clubmsg{margin:0 0 10px;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--good) 12%,transparent);font-size:.86rem}
 .tbtn.on{background:color-mix(in srgb,var(--good) 14%,transparent)}
 .empty{color:var(--muted);font-size:.9rem;padding:8px 0}
 .err{color:var(--crit)}
@@ -174,8 +184,8 @@ async function start(){if(!SES){showLogin();return}
   catch(e){if(e.status===400||e.status===401){logout();return}showLogin(e.message);return}
   shell();await loadAll()}
 async function loadAll(){const m=$('#main');if(m)m.classList.add('loading');
-  try{const[o,d,u,r,c,an]=await Promise.all([rpc('admin_overview'),rpc('admin_daily',{p_days:ST.days}),rpc('admin_users',{p_query:ST.q,p_limit:200}),rpc('admin_reports',{p_all:ST.allRep}),rpc('admin_clubs'),rpc('get_announcements',{p_limit:20}).catch(()=>[])]);
-    ST.o=o;ST.d=d||[];ST.users=u||[];ST.reports=r||[];ST.clubs=c||[];ST.ann=an||[];ST.err='';ST.at=new Date()}
+  try{const[o,d,u,r,c,an,ch]=await Promise.all([rpc('admin_overview'),rpc('admin_daily',{p_days:ST.days}),rpc('admin_users',{p_query:ST.q,p_limit:200}),rpc('admin_reports',{p_all:ST.allRep}),rpc('admin_clubs'),rpc('get_announcements',{p_limit:20}).catch(()=>[]),rpc('admin_challenges').catch(()=>null)]);
+    ST.o=o;ST.d=d||[];ST.users=u||[];ST.reports=r||[];ST.clubs=c||[];ST.ann=an||[];ST.chal=ch;ST.err='';ST.at=new Date()}
   catch(e){ST.err=e.code==='PGRST202'?'Die Datenbank ist nicht aktuell: Bitte die neue SQL-Datei in Supabase ausführen.':e.message}
   render();if(m)m.classList.remove('loading')}
 
@@ -211,7 +221,7 @@ function render(){const m=$('#main');if(!m)return;m.innerHTML='';$('#stamp').tex
   g3.append(hbarCard('Geteilt nach Art','alle Zeit',Object.entries(o.modes||{}).map(([k,v])=>[MN[k]||k,v]).sort((a,b)=>b[1]-a[1])),
     hbarCard('App-Versionen','Nutzer je Version, letzte 30 Tage',(o.versions||[]).map(x=>[x.version,x.users])),storageCard(o));s2.append(g3);m.append(s2);
   // Meldungen
-  m.append(annSec());
+  m.append(annSec());m.append(chalSec());
   m.append(reportsSec());
   // Nutzer + Clubs
   const s4=el('section');s4.append(el('h3',null,'Nutzer und Clubs'));const ug=el('div','grid');ug.style.gridTemplateColumns='minmax(0,2fr) minmax(0,1fr)';if(innerWidth<900)ug.style.gridTemplateColumns='1fr';ug.append(usersCard(),clubsCard());s4.append(ug);m.append(s4);
@@ -291,22 +301,94 @@ function proCell(u){const d=el('td');const k=u.pro||'';
     else if(!k)d.append(' ',btnA('Schenken','',async()=>{const v=prompt('Linefact Pro für @'+u.username+' schenken – wie viele Tage? (leer = unbegrenzt)','');if(v===null)return;const n=v.trim()===''?-1:parseInt(v,10);if(!(n===-1||n>0)){alert('Bitte eine Zahl eingeben.');return}await act('admin_set_pro',{p_user:u.id,p_days:n})}))}
   return d}
 function clubsCard(){const c=el('div','card');c.append(el('h2',null,'Clubs'),el('p','sub','„Offiziell“ zeigt in der App ein blaues Abzeichen beim Club (z. B. echter Verein, geprüft).'));if(!ST.clubs.length){c.append(el('p','empty','Noch keine Clubs.'));return c}
-  const w=el('div','tscroll'),t=el('table');t.innerHTML='<thead><tr><th>Club</th><th class="n">Mitgl.</th><th class="n">Beitr.</th><th class="n">Strecken</th><th>Offiziell</th></tr></thead>';const bd=el('tbody');
-  ST.clubs.forEach(g=>{const r=el('tr');const nm=el('td',null,g.name);if(g.official)nm.append(' ',el('span','badge good','✓ Offiziell'));
-    const tg=el('button','tbtn'+(g.official?' on':''),g.official?'Aus':'Offiziell');tg.type='button';tg.setAttribute('aria-pressed',String(!!g.official));tg.setAttribute('aria-label',(g.official?'Offiziell entfernen: ':'Offiziell schalten: ')+g.name);
-    tg.onclick=async()=>{if(!g.official&&!confirm('„'+g.name+'“ als offiziellen Club kennzeichnen?'))return;tg.disabled=true;await act('admin_set_official',{p_group:g.id,p_on:!g.official})};const tc=el('td');tc.append(tg);
-    r.append(nm,el('td','n',fmtN(g.members)),el('td','n',fmtN(g.posts)),el('td','n',fmtN((g.tracks||0)+(g.courses||0))),tc);bd.append(r)});t.append(bd);w.append(t);c.append(w);return c}
+  if(ST.clubMsg){const m=el('p','clubmsg',ST.clubMsg);m.setAttribute('role','status');c.append(m)}
+  const w=el('div','tscroll'),t=el('table');t.innerHTML='<thead><tr><th>Club · Offiziell-Siegel</th><th class="n">Mitgl.</th><th class="n">Beitr.</th><th class="n">Strecken</th></tr></thead>';const bd=el('tbody');
+  ST.clubs.forEach(g=>{const r=el('tr');const nm=el('td','clubnm');nm.append(el('b',null,g.name));const st=el('div','clubst');
+    if(g.official){st.append(el('span','badge good','✓ Offiziell'));const rm=el('button','tbtn danger','Siegel entfernen');rm.type='button';rm.setAttribute('aria-label','Offiziell-Siegel entfernen: '+g.name);
+      rm.onclick=()=>setOfficial(g,false,rm);st.append(rm)}
+    else{st.append(el('span','badge','nicht offiziell'));const on=el('button','tbtn','Offiziell machen');on.type='button';on.setAttribute('aria-label','Offiziell machen: '+g.name);on.onclick=()=>setOfficial(g,true,on);st.append(on)}
+    nm.append(st);r.append(nm,el('td','n',fmtN(g.members)),el('td','n',fmtN(g.posts)),el('td','n',fmtN((g.tracks||0)+(g.courses||0))));bd.append(r)});t.append(bd);w.append(t);c.append(w);return c}
+// Offiziell-Siegel setzen oder entfernen – mit Rückfrage, Prüfung und klarer Meldung
+async function setOfficial(g,on,b){if(!confirm(on?'„'+g.name+'“ als offiziellen Club kennzeichnen?':'Offiziell-Siegel bei „'+g.name+'“ entfernen?'))return;b.disabled=true;b.textContent='Speichert …';
+  try{await rpc('admin_set_official',{p_group:g.id,p_on:on});await loadAll();const now=(ST.clubs.find(x=>x.id===g.id)||{}).official;
+    ST.clubMsg=now===on?(on?'✓ „'+g.name+'“ ist jetzt offiziell.':'✓ Siegel bei „'+g.name+'“ entfernt. In der App verschwindet es, sobald die Clubs neu geladen werden (Clubs öffnen oder App neu starten).'):'Hat nicht geklappt: Der Server meldet noch den alten Stand. Bitte das neue splitline-supabase.sql in Supabase ausführen.';render()}
+  catch(e){b.disabled=false;b.textContent=on?'Offiziell machen':'Siegel entfernen';alert('Hat nicht geklappt: '+(e.message||e))}}
 // ---------- Offizielle Beiträge (sieht jeder angemeldete Nutzer im Feed) ----------
+// Einfache Formatierung (gleich wie in der App): **fett**, *kursiv*, ## Überschrift, - Liste, [Text](https://…)
+function annMd(src){const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const inl=x=>esc(x).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(^|[^*])\*([^*]+)\*/g,'$1<i>$2</i>').replace(/\[([^\]]{1,80})\]\((https:\/\/[^\s)]{1,300})\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  const out=[];let list=null,para=[];const flush=()=>{if(para.length){out.push('<p>'+para.map(inl).join('<br>')+'</p>');para=[]}if(list){out.push('<ul>'+list.map(x=>'<li>'+inl(x)+'</li>').join('')+'</ul>');list=null}};
+  String(src||'').split(/\r?\n/).forEach(l=>{const t=l.trim();if(!t){flush();return}const h=t.match(/^#{1,3}\s+(.+)/);if(h){flush();out.push('<h4>'+inl(h[1])+'</h4>');return}
+    const li=t.match(/^[-•*]\s+(.+)/);if(li){if(para.length){out.push('<p>'+para.map(inl).join('<br>')+'</p>');para=[]}(list=list||[]).push(li[1]);return}if(list){out.push('<ul>'+list.map(x=>'<li>'+inl(x)+'</li>').join('')+'</ul>');list=null}para.push(t)});
+  flush();return out.join('')}
+// Bild verkleinern: max. 1200 px breit, JPEG, höchstens ca. 600 KB
+function annImage(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('Dieses Bild geht nicht.'))};
+  im.onload=()=>{URL.revokeObjectURL(u);let w=im.naturalWidth,h=im.naturalHeight;const k=Math.min(1,1200/w,1600/h);w=Math.round(w*k);h=Math.round(h*k);const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(im,0,0,w,h);
+    for(const q of [.85,.75,.65,.55,.45]){const d=c.toDataURL('image/jpeg',q);if(d.length<=850000){res(d);return}}rej(new Error('Das Bild ist zu groß.'))};im.src=u})}
+const ANN={img:null};
 function annSec(){const s=el('section');s.append(el('h3',null,'Offizielle Beiträge'));const c=el('div','card');
-  c.append(el('p','sub','Erscheinen bei allen angemeldeten Nutzern als blauer Banner unter Aktivität › Alle (die ersten 7 Tage oben angeheftet).'));
-  const ta=document.createElement('textarea');ta.rows=4;ta.maxLength=2000;ta.placeholder='Text, z. B. „Neu in Version 1.0.46: …“';ta.setAttribute('aria-label','Text des offiziellen Beitrags');ta.className='anta';
+  c.append(el('p','sub','Erscheinen bei allen angemeldeten Nutzern als blauer Banner unter Aktivität › Alle (die ersten 7 Tage oben angeheftet). Jeder kann einen Beitrag mit ✕ für sich ausblenden.'));
+  const lab=(t,inp)=>{const l=el('label','annl');l.append(el('span',null,t),inp);return l};
+  const ti=el('input');ti.type='text';ti.maxLength=120;ti.placeholder='Titel (freiwillig), z. B. „Neu in Version 1.0.49“';ti.className='anin';
+  const tb=el('div','anntb');const ta=document.createElement('textarea');ta.rows=7;ta.maxLength=4000;ta.placeholder='Text …\n\n**fett**, *kursiv*\n## Zwischenüberschrift\n- Aufzählung\n[Linktext](https://…)';ta.setAttribute('aria-label','Text des offiziellen Beitrags');ta.className='anta';
+  const wrap=(a,b,ph)=>{const st=ta.selectionStart,en=ta.selectionEnd,sel=ta.value.slice(st,en)||ph;ta.setRangeText(a+sel+b,st,en,'select');ta.focus();prev()};
+  const line=(p)=>{const st=ta.selectionStart;const ls=ta.value.lastIndexOf('\n',st-1)+1;ta.setRangeText(p,ls,ls,'end');ta.focus();prev()};
+  [['B','Fett',()=>wrap('**','**','fett')],['I','Kursiv',()=>wrap('*','*','kursiv')],['H','Zwischenüberschrift',()=>line('## ')],['•','Aufzählung',()=>line('- ')],['🔗','Link',()=>{const u=prompt('Link (muss mit https:// beginnen):','https://');if(!u||!/^https:\/\//.test(u))return;wrap('[','](' + u + ')','Linktext')}]].forEach(([t,l,f])=>{const b=el('button','tbtn',t);b.type='button';b.title=l;b.setAttribute('aria-label',l);b.onclick=f;tb.append(b)});
+  const fi=el('input');fi.type='file';fi.accept='image/*';fi.className='anin';const imgInfo=el('span','sub');const imgX=el('button','tbtn','Bild entfernen');imgX.type='button';imgX.hidden=!ANN.img;
+  fi.onchange=async()=>{const f=fi.files&&fi.files[0];if(!f)return;imgInfo.textContent='Wird verkleinert …';try{ANN.img=await annImage(f);imgInfo.textContent='Bild bereit ('+Math.round(ANN.img.length*3/4/1024)+' KB)';imgX.hidden=false}catch(e){ANN.img=null;imgInfo.textContent=e.message}prev()};
+  imgX.onclick=()=>{ANN.img=null;fi.value='';imgInfo.textContent='';imgX.hidden=true;prev()};
+  const lt=el('input');lt.type='text';lt.maxLength=40;lt.placeholder='Knopf-Text, z. B. „Zu Instagram“';lt.className='anin';
+  const lu=el('input');lu.type='url';lu.maxLength=300;lu.placeholder='https://…';lu.className='anin';
+  const pv=el('div','annprev');
+  const prev=()=>{pv.innerHTML='';const card=el('div','apcard');const bar=el('div','apbar');bar.innerHTML='<span class="apav">L</span><span><b>LINEFACT</b><small>Offizielle Mitteilung · gerade eben</small></span>';card.append(bar);
+    if(ANN.img){const im=document.createElement('img');im.src=ANN.img;im.alt='';card.append(im)}const bd=el('div','apbody');if(ti.value.trim())bd.append(el('h3',null,ti.value.trim()));
+    if(ta.value.trim()){const d=el('div','aptext');d.innerHTML=annMd(ta.value);bd.append(d)}if(/^https:\/\//.test(lu.value.trim())){const a=el('span','apbtn',lt.value.trim()||'Mehr erfahren');bd.append(a)}card.append(bd);
+    pv.append(el('div','sub','Vorschau (so sieht es in der App aus):'),card)};
+  [ti,ta,lt,lu].forEach(x=>x.addEventListener('input',prev));
   const go=el('button','primary','Veröffentlichen');go.type='button';const info=el('p','sub');
-  const pl=el('label');pl.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0 0;font-size:.92rem';const pc=document.createElement('input');pc.type='checkbox';pc.id='annPush';pl.append(pc,document.createTextNode('Auch als Push-Mitteilung schicken (höchstens 1× pro Tag, die ersten 150 Zeichen)'));
-  go.onclick=async()=>{const t=ta.value.trim();if(!t){info.textContent='Bitte zuerst einen Text schreiben.';return}if(!confirm(pc.checked?'Diesen Beitrag an alle Nutzer veröffentlichen UND als Push-Mitteilung schicken?':'Diesen Beitrag an alle Nutzer veröffentlichen?'))return;go.disabled=true;
-    try{await rpc('admin_post_announcement',{p_text:t,p_push:pc.checked});ta.value='';pc.checked=false;await loadAll()}catch(e){info.textContent=/push_limit/.test(e.message)?'Heute wurde schon eine Push-Mitteilung geschickt. Ohne Haken geht es sofort, mit Haken morgen wieder.':e.message;go.disabled=false}};
-  const row=el('div');row.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0 4px';row.append(go,info);c.append(ta,pl,row);
+  const pl=el('label');pl.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0 0;font-size:.92rem';const pc=document.createElement('input');pc.type='checkbox';pc.id='annPush';pl.append(pc,document.createTextNode('Auch als Push-Mitteilung schicken (höchstens 1× pro Tag; Titel + die ersten 150 Zeichen)'));
+  go.onclick=async()=>{const t=ta.value.trim(),tt=ti.value.trim(),u=lu.value.trim();info.textContent='';
+    if(!t&&!tt){info.textContent='Bitte einen Titel oder Text schreiben.';return}if(u&&!/^https:\/\//.test(u)){info.textContent='Der Link muss mit https:// beginnen.';return}
+    if(!confirm(pc.checked?'Diesen Beitrag an alle Nutzer veröffentlichen UND als Push-Mitteilung schicken?':'Diesen Beitrag an alle Nutzer veröffentlichen?'))return;go.disabled=true;
+    try{await rpc('admin_post_announcement',{p_text:t,p_push:pc.checked,p_title:tt||null,p_image:ANN.img,p_link:u||null,p_link_text:lt.value.trim()||null});ANN.img=null;await loadAll()}
+    catch(e){info.textContent=/push_limit/.test(e.message)?'Heute wurde schon eine Push-Mitteilung geschickt. Ohne Haken geht es sofort, mit Haken morgen wieder.':/image_invalid/.test(e.message)?'Das Bild geht nicht.':/link_invalid/.test(e.message)?'Der Link muss mit https:// beginnen.':e.message;go.disabled=false}};
+  const row=el('div');row.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0 4px';row.append(go,info);
+  const imgRow=el('div');imgRow.style.cssText='display:flex;gap:8px;align-items:center;flex-wrap:wrap';imgRow.append(fi,imgX,imgInfo);
+  const lnk=el('div');lnk.style.cssText='display:grid;grid-template-columns:1fr 2fr;gap:8px';lnk.append(lab('Knopf-Text',lt),lab('Knopf-Link',lu));
+  c.append(lab('Titel',ti),el('div','sub','Text'),tb,ta,lab('Bild (freiwillig, wird verkleinert)',imgRow),lnk,pl,row,pv);prev();
   if(!(ST.ann||[]).length)c.append(el('p','empty','Noch keine offiziellen Beiträge.'));
-  (ST.ann||[]).forEach(a=>{const d=el('div','rep');d.append(el('div','meta',new Date(a.created_at).toLocaleString('de-AT')),el('div','ctx',a.body));const ac=el('div','acts');ac.append(btnA('Löschen','danger',()=>act('admin_delete_announcement',{p_id:a.id}),'Diesen Beitrag für alle löschen?'));d.append(ac);c.append(d)});
+  (ST.ann||[]).forEach(a=>{const d=el('div','rep');d.append(el('div','meta',new Date(a.created_at).toLocaleString('de-AT')+(a.link_url?' · Knopf: '+(a.link_text||'Mehr erfahren')+' → '+a.link_url:'')));
+    if(a.title)d.append(el('b',null,a.title));if(a.image){const im=document.createElement('img');im.src=a.image;im.alt='';im.style.cssText='max-width:220px;border-radius:10px';d.append(im)}
+    if(a.body){const x=el('div','ctx');x.innerHTML=annMd(a.body);d.append(x)}const ac=el('div','acts');ac.append(btnA('Löschen','danger',()=>act('admin_delete_announcement',{p_id:a.id}),'Diesen Beitrag für alle löschen?'));d.append(ac);c.append(d)});
+  s.append(c);return s}
+
+
+// ---------- Challenges für alle Nutzer ----------
+function chalSec(){const s=el('section');s.append(el('h3',null,'Challenges für alle'));const c=el('div','card');
+  if(ST.chal==null){c.append(el('p','sub','Die Datenbank ist noch nicht auf 1.0.51 – bitte die neue SQL-Datei in Supabase ausführen.'));s.append(c);return s}
+  c.append(el('p','sub','Erscheint bei allen angemeldeten Nutzern unter Aktivität › Alle als „Challenge von Linefact“. Mitmachen per Knopf; der Fortschritt kommt aus ihren Fahrten. Wer es schafft, bekommt ein Abzeichen im Profil. „Zeit schlagen“ gibt es nur in Clubs bzw. von Person zu Person (es braucht eine gemeinsame Strecke).'));
+  const lab=(t,inp)=>{const l=el('label','annl');l.append(el('span',null,t),inp);return l};
+  const kind=document.createElement('select');kind.className='anin';[['rides','Fahrtage (Tage, an denen gefahren wurde)'],['km','Kilometer'],['laps','Motocross-Runden']].forEach(([v,t])=>kind.append(new Option(t,v)));
+  const mode=document.createElement('select');mode.className='anin';[['','Alle Fahrten'],['mx','Nur Motocross'],['enduro','Nur Enduro']].forEach(([v,t])=>mode.append(new Option(t,v)));
+  const goal=el('input');goal.type='number';goal.min='1';goal.className='anin';goal.placeholder='z. B. 10';
+  const ends=el('input');ends.type='date';ends.className='anin';{const d=new Date();const e=new Date(d.getFullYear(),d.getMonth()+1,0);ends.value=e.getFullYear()+'-'+String(e.getMonth()+1).padStart(2,'0')+'-'+String(e.getDate()).padStart(2,'0')}
+  const ti=el('input');ti.type='text';ti.maxLength=80;ti.className='anin';ti.placeholder='z. B. 10 Fahrtage im November';
+  const no=document.createElement('textarea');no.rows=2;no.maxLength=300;no.className='anin';no.placeholder='Beschreibung (freiwillig)';
+  const upd=()=>{mode.disabled=kind.value==='laps'};kind.onchange=upd;upd();
+  const g1=el('div');g1.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px';g1.append(lab('Art',kind),lab('Welche Fahrten',mode),lab('Ziel',goal),lab('Läuft bis',ends));
+  const go=el('button','primary','Challenge für alle posten');go.type='button';const info=el('p','sub');
+  go.onclick=async()=>{info.textContent='';const gv=+goal.value,t=ti.value.trim();if(!(gv>0)){info.textContent='Bitte ein Ziel eingeben.';return}if(t.length<2){info.textContent='Bitte einen Titel eingeben.';return}
+    const e=new Date(ends.value+'T23:59:00');if(isNaN(e)||e<new Date()){info.textContent='Das Ende muss in der Zukunft liegen.';return}
+    if(!confirm('Diese Challenge an alle Nutzer posten?'))return;go.disabled=true;
+    try{await rpc('create_challenge',{p:{audience:'all',kind:kind.value,goal:gv,mode:kind.value==='laps'?null:(mode.value||null),title:t,note:no.value.trim(),ends:e.toISOString()}});await loadAll()}
+    catch(x){info.textContent=/goal_invalid/.test(x.message)?'Das Ziel passt nicht.':/time_invalid/.test(x.message)?'Das Ende passt nicht (höchstens ein Jahr).':x.message;go.disabled=false}};
+  const row=el('div');row.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0 4px';row.append(go,info);
+  c.append(lab('Titel',ti),g1,no,row);
+  if(!ST.chal.length)c.append(el('p','empty','Noch keine Challenge für alle.'));
+  const U={rides:'Fahrtage',km:'km',laps:'Runden'};
+  ST.chal.forEach(x=>{const d=el('div','rep');const ended=new Date(x.ends_at)<new Date();d.append(el('div','meta',new Date(x.created_at).toLocaleDateString('de-AT')+' · bis '+new Date(x.ends_at).toLocaleDateString('de-AT')+(ended?' · vorbei':'')));
+    d.append(el('b',null,x.title));d.append(el('div','ctx','Ziel: '+(+x.goal)+' '+(U[x.kind]||'')+(x.mode?' ('+(x.mode==='mx'?'Motocross':'Enduro')+')':'')+' · '+x.participants+' dabei · '+x.finishers+' geschafft'));
+    const ac=el('div','acts');ac.append(btnA('Löschen','danger',()=>act('delete_challenge',{p_id:x.id}),'Diese Challenge für alle löschen? Abzeichen gehen verloren.'));d.append(ac);c.append(d)});
   s.append(c);return s}
 
 // ---------- Schnellzugriff ----------
