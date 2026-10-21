@@ -114,6 +114,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .aptext p,.aptext ul,.aptext h4{margin:0 0 6px}.aptext a{color:#fff}.apbtn{align-self:flex-start;background:#fff;color:#1E50FF;border-radius:999px;padding:7px 14px;font-weight:800}
 .rep .ctx p,.rep .ctx ul,.rep .ctx h4{margin:0 0 4px}
 .anta{width:100%;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical}
+.chlist{display:flex;flex-direction:column;gap:4px;padding:8px 10px;border-radius:10px;background:var(--surface-2);font-size:.85rem}.chlist ol{margin:0 0 6px;padding-left:22px}.chlist li{display:flex;justify-content:space-between;gap:10px}.chlist .meta{color:var(--muted)}
 .clubnm b{display:block}.clubst{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:5px}.clubmsg{margin:0 0 10px;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--good) 12%,transparent);font-size:.86rem}
 .tbtn.on{background:color-mix(in srgb,var(--good) 14%,transparent)}
 .empty{color:var(--muted);font-size:.9rem;padding:8px 0}
@@ -224,7 +225,7 @@ function render(){const m=$('#main');if(!m)return;m.innerHTML='';$('#stamp').tex
   m.append(annSec());m.append(chalSec());
   m.append(reportsSec());
   // Nutzer + Clubs
-  const s4=el('section');s4.append(el('h3',null,'Nutzer und Clubs'));const ug=el('div','grid');ug.style.gridTemplateColumns='minmax(0,2fr) minmax(0,1fr)';if(innerWidth<900)ug.style.gridTemplateColumns='1fr';ug.append(usersCard(),clubsCard());s4.append(ug);m.append(s4);
+  const s4=el('section');s4.append(el('h3',null,'Nutzer und Clubs'));const ug=el('div','grid');ug.style.gridTemplateColumns='minmax(0,2fr) minmax(0,1fr)';if(innerWidth<900)ug.style.gridTemplateColumns='1fr';ug.append(usersCard(),clubsCard(),newUserCard());s4.append(ug);m.append(s4);
   m.append(linksSec())}
 function tile(l,v,h,raw){const c=el('div','card tile');c.append(el('div','lbl',l),el('div','val',raw?String(v).replace('.',','):fmtN(v)));if(h)c.append(el('div','hint',h));return c}
 function repTile(n){const c=el('div','card tile'+(n?' alert':''));c.append(el('div','lbl','Offene Meldungen'));const v=el('div','val',fmtN(n));c.append(v);
@@ -300,6 +301,23 @@ function proCell(u){const d=el('td');const k=u.pro||'';
   if(k!=='admin'){if(k==='gift')d.append(' ',btnA('Weg','',()=>act('admin_set_pro',{p_user:u.id,p_days:0}),'Geschenktes Pro für @'+u.username+' entfernen?'));
     else if(!k)d.append(' ',btnA('Schenken','',async()=>{const v=prompt('Linefact Pro für @'+u.username+' schenken – wie viele Tage? (leer = unbegrenzt)','');if(v===null)return;const n=v.trim()===''?-1:parseInt(v,10);if(!(n===-1||n>0)){alert('Bitte eine Zahl eingeben.');return}await act('admin_set_pro',{p_user:u.id,p_days:n})}))}
   return d}
+// ---------- Nutzer von Hand anlegen ----------
+function newUserCard(){const c=el('div','card');c.append(el('h2',null,'Nutzer hinzufügen'),el('p','sub','Legt ein fertiges Konto an (E-Mail ist gleich bestätigt). Gib der Person E-Mail und Passwort weiter – sie kann das Passwort in der App unter Mehr › Profil ändern.'));
+  const L=(t,i)=>{const l=el('label','annl');l.append(el('span',null,t),i);return l};const inp=(ty,ph,ac)=>{const i=el('input','anin');i.type=ty;i.placeholder=ph;if(ac)i.autocomplete=ac;return i};
+  const em=inp('email','name@beispiel.at','off'),pw=inp('text','mind. 8 Zeichen','new-password'),un=inp('text','z. B. max.muster','off'),nm=inp('text','z. B. Max Muster','off');
+  const gen=el('button','tbtn','Erzeugen');gen.type='button';gen.onclick=()=>{const A='abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';const r=new Uint32Array(12);crypto.getRandomValues(r);pw.value=[...r].map(x=>A[x%A.length]).join('')};
+  const pr=el('select','anin');[['0','kein Pro'],['30','Pro 30 Tage'],['365','Pro 1 Jahr'],['-1','Pro unbegrenzt']].forEach(([v,t])=>pr.append(new Option(t,v)));
+  const pwr=el('div');pwr.style.cssText='display:flex;gap:6px;align-items:center';pw.style.flex='1';pwr.append(pw,gen);
+  const go=el('button','primary','Nutzer anlegen');go.type='button';const info=el('p','sub');info.setAttribute('role','status');
+  const M={forbidden:'Nur für Linefact-Admins.',email_invalid:'Die E-Mail-Adresse passt nicht.',password_invalid:'Das Passwort braucht mindestens 8 Zeichen.',username_invalid:'Benutzername: 3–20 Zeichen, nur a–z, 0–9, Punkt und _.',email_taken:'Diese E-Mail-Adresse hat schon ein Konto.',username_taken:'Dieser Benutzername ist schon vergeben.'};
+  go.onclick=async()=>{info.textContent='';const e=em.value.trim(),p=pw.value,u=un.value.trim().toLowerCase();
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){info.textContent=M.email_invalid;return}if(p.length<8){info.textContent=M.password_invalid;return}if(!/^[a-z0-9_.]{3,20}$/.test(u)){info.textContent=M.username_invalid;return}
+    go.disabled=true;try{await rpc('admin_create_user',{p_email:e,p_password:p,p_username:u,p_name:nm.value.trim(),p_pro_days:+pr.value});
+      ST.newUser='✓ Konto angelegt: @'+u+' · '+e+' · Passwort: '+p+' – jetzt weitergeben, es wird nicht gespeichert.';await loadAll()}
+    catch(x){go.disabled=false;const k=Object.keys(M).find(k=>String(x.message||'').includes(k));info.textContent=k?M[k]:/admin_create_user/.test(x.message||'')?'Bitte zuerst das neue splitline-supabase.sql in Supabase ausführen.':'Hat nicht geklappt: '+(x.message||x)}};
+  if(ST.newUser){const m=el('p','clubmsg',ST.newUser);m.setAttribute('role','status');c.append(m);ST.newUser=''}
+  const g=el('div');g.style.cssText='display:grid;grid-template-columns:1fr;gap:8px';g.append(L('E-Mail',em),L('Passwort',pwr),L('Benutzername',un),L('Name (freiwillig)',nm),L('Linefact Pro',pr));
+  const row=el('div');row.style.cssText='display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap';row.append(go,info);c.append(g,row);return c}
 function clubsCard(){const c=el('div','card');c.append(el('h2',null,'Clubs'),el('p','sub','„Offiziell“ zeigt in der App ein blaues Abzeichen beim Club (z. B. echter Verein, geprüft).'));if(!ST.clubs.length){c.append(el('p','empty','Noch keine Clubs.'));return c}
   if(ST.clubMsg){const m=el('p','clubmsg',ST.clubMsg);m.setAttribute('role','status');c.append(m)}
   const w=el('div','tscroll'),t=el('table');t.innerHTML='<thead><tr><th>Club · Offiziell-Siegel</th><th class="n">Mitgl.</th><th class="n">Beitr.</th><th class="n">Strecken</th></tr></thead>';const bd=el('tbody');
@@ -388,7 +406,15 @@ function chalSec(){const s=el('section');s.append(el('h3',null,'Challenges für 
   const U={rides:'Fahrtage',km:'km',laps:'Runden'};
   ST.chal.forEach(x=>{const d=el('div','rep');const ended=new Date(x.ends_at)<new Date();d.append(el('div','meta',new Date(x.created_at).toLocaleDateString('de-AT')+' · bis '+new Date(x.ends_at).toLocaleDateString('de-AT')+(ended?' · vorbei':'')));
     d.append(el('b',null,x.title));d.append(el('div','ctx','Ziel: '+(+x.goal)+' '+(U[x.kind]||'')+(x.mode?' ('+(x.mode==='mx'?'Motocross':'Enduro')+')':'')+' · '+x.participants+' dabei · '+x.finishers+' geschafft'));
-    const ac=el('div','acts');ac.append(btnA('Löschen','danger',()=>act('delete_challenge',{p_id:x.id}),'Diese Challenge für alle löschen? Abzeichen gehen verloren.'));d.append(ac);c.append(d)});
+    const box=el('div','chlist');box.hidden=true;const sb=el('button','tbtn','Wer hat es geschafft? ('+x.finishers+')');sb.type='button';
+    sb.onclick=async()=>{if(!box.hidden){box.hidden=true;return}box.hidden=false;box.textContent='Lade …';
+      try{const L=(await rpc('admin_challenge_entries',{p_id:x.id}))||[];box.innerHTML='';const vt=r=>x.kind==='km'?(+r.progress).toLocaleString('de-AT')+' km':(+r.progress)+' '+(U[x.kind]||'');
+        const D=L.filter(r=>r.done_at),O=L.filter(r=>!r.done_at);
+        const list=(title,R0,f)=>{box.append(el('b',null,title+' ('+R0.length+')'));if(!R0.length){box.append(el('p','empty','Noch niemand.'));return}const ol=el('ol');R0.forEach(r=>{const li=el('li');li.append(el('span',null,(r.display_name?r.display_name+' ':'')+'@'+r.username),el('span','meta',f(r)));ol.append(li)});box.append(ol)};
+        list('Geschafft',D,r=>new Date(r.done_at).toLocaleDateString('de-AT')+' · '+vt(r));list('Noch dabei',O,r=>vt(r)+' von '+(+x.goal));
+        const cp=el('button','tbtn','Namen kopieren');cp.type='button';cp.onclick=async()=>{try{await navigator.clipboard.writeText(D.map(r=>'@'+r.username+(r.display_name?' ('+r.display_name+')':'')).join('\n'));cp.textContent='Kopiert ✓'}catch(e){cp.textContent='Kopieren ging nicht'}};if(D.length)box.append(cp)}
+      catch(e){box.textContent=/admin_challenge_entries/.test(e.message||'')?'Bitte zuerst das neue splitline-supabase.sql in Supabase ausführen.':'Fehler: '+(e.message||e)}};
+    const ac=el('div','acts');ac.append(sb,btnA('Löschen','danger',()=>act('delete_challenge',{p_id:x.id}),'Diese Challenge für alle löschen? Abzeichen gehen verloren.'));d.append(ac,box);c.append(d)});
   s.append(c);return s}
 
 // ---------- Schnellzugriff ----------
