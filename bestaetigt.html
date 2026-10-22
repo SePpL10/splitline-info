@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Linefact – E-Mail bestätigt</title>
+<style>
+:root{color-scheme:light;--page:#F2F3EF;--card:#fff;--ink:#121418;--ink2:#5C636B;--line:#E3E4DF;--accent:#1E50FF;--bad:#C4362B;--good:#17853F}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--page:#0E0F11;--card:#17191D;--ink:#F0F1F2;--ink2:#B9BDC3;--line:#2A2D33;--accent:#5B7FFF;--bad:#FF6B5E;--good:#3CC46B}}
+:root[data-theme="dark"]{color-scheme:dark;--page:#0E0F11;--card:#17191D;--ink:#F0F1F2;--ink2:#B9BDC3;--line:#2A2D33;--accent:#5B7FFF;--bad:#FF6B5E;--good:#3CC46B}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:420px;margin:0 auto;padding:12vh 16px 40px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.3rem;margin-bottom:18px}
+.logo{width:36px;height:36px;border-radius:10px;background:#1E50FF;display:grid;place-items:center;overflow:hidden}
+.logo svg{width:100%;height:100%}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
+h1{font-size:1.25rem;margin:0 0 6px}
+p{margin:0 0 12px;color:var(--ink2)}
+label{display:block;font-size:.9rem;font-weight:600;margin:14px 0 5px}
+input{width:100%;font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{width:100%;margin-top:18px;min-height:48px;border:0;border-radius:12px;background:var(--accent);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+button:disabled{opacity:.6}
+.msg{margin-top:14px;font-weight:600}
+.msg.err{color:var(--bad)}.msg.ok{color:var(--good)}
+.foot{margin-top:18px;font-size:.85rem;color:var(--ink2);text-align:center}
+.foot a{color:var(--accent)}
+.btn{display:block;width:100%;text-align:center;margin-top:14px;padding:13px;border-radius:12px;background:var(--accent);color:#fff;font-weight:700;text-decoration:none}
+.ok{color:var(--good);font-weight:700}.err{color:var(--bad);font-weight:700}
+</style>
+</head>
+<body>
+<main>
+<div class="brand"><span>Linefact</span></div>
+<div class="card">
+<h1 id="h">E-Mail bestätigt ✓</h1>
+<p id="t">Deine E-Mail-Adresse ist bestätigt. Öffne jetzt Linefact und melde dich mit deiner E-Mail und deinem Passwort an.</p>
+<a class="btn" id="b" href="linefact://">In Linefact öffnen</a>
+</div>
+</main>
+<script>
+(function(){var en=!/^de/i.test(navigator.language||'');var q=new URLSearchParams((location.hash||'').slice(1)+'&'+(location.search||'').slice(1));
+var bad=q.get('error')||q.get('error_code');var h=document.getElementById('h'),t=document.getElementById('t'),b=document.getElementById('b');
+if(bad){document.documentElement.lang=en?'en':'de';h.textContent=en?'Link no longer valid':'Link nicht mehr gültig';h.className='err';
+  t.textContent=en?'This confirmation link has expired or was already used. Open Linefact, enter your email under Sign in and tap “Resend confirmation email”.':'Dieser Bestätigungs-Link ist abgelaufen oder wurde schon benutzt. Öffne Linefact, gib unter „Anmelden“ deine E-Mail ein und tippe auf „Bestätigungs-E-Mail nochmal senden“.';}
+else if(en){document.documentElement.lang='en';h.textContent='Email confirmed ✓';t.textContent='Your email address is confirmed. Now open Linefact and sign in with your email and password.';}
+if(en)b.textContent='Open Linefact';
+// Anmeldedaten aus dem Link nicht in der Adresszeile lassen
+if(location.hash)history.replaceState(null,'',location.pathname);})();
+</script>
+</body>
+</html>
