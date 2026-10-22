@@ -115,6 +115,8 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .rep .ctx p,.rep .ctx ul,.rep .ctx h4{margin:0 0 4px}
 .anta{width:100%;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical}
 .chlist{display:flex;flex-direction:column;gap:4px;padding:8px 10px;border-radius:10px;background:var(--surface-2);font-size:.85rem}.chlist ol{margin:0 0 6px;padding-left:22px}.chlist li{display:flex;justify-content:space-between;gap:10px}.chlist .meta{color:var(--muted)}
+.uacts{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}.banmsg{color:var(--crit);font-size:.8rem;font-weight:650;margin-top:3px}
+.modl{display:flex;flex-direction:column}.modl .rep .ctx{white-space:pre-wrap;word-break:break-word}
 .clubnm b{display:block}.clubst{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:5px}.clubmsg{margin:0 0 10px;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--good) 12%,transparent);font-size:.86rem}
 .tbtn.on{background:color-mix(in srgb,var(--good) 14%,transparent)}
 .empty{color:var(--muted);font-size:.9rem;padding:8px 0}
@@ -185,8 +187,8 @@ async function start(){if(!SES){showLogin();return}
   catch(e){if(e.status===400||e.status===401){logout();return}showLogin(e.message);return}
   shell();await loadAll()}
 async function loadAll(){const m=$('#main');if(m)m.classList.add('loading');
-  try{const[o,d,u,r,c,an,ch]=await Promise.all([rpc('admin_overview'),rpc('admin_daily',{p_days:ST.days}),rpc('admin_users',{p_query:ST.q,p_limit:200}),rpc('admin_reports',{p_all:ST.allRep}),rpc('admin_clubs'),rpc('get_announcements',{p_limit:20}).catch(()=>[]),rpc('admin_challenges').catch(()=>null)]);
-    ST.o=o;ST.d=d||[];ST.users=u||[];ST.reports=r||[];ST.clubs=c||[];ST.ann=an||[];ST.chal=ch;ST.err='';ST.at=new Date()}
+  try{const[o,d,u,r,c,an,ch,ab]=await Promise.all([rpc('admin_overview'),rpc('admin_daily',{p_days:ST.days}),rpc('admin_users',{p_query:ST.q,p_limit:200}),rpc('admin_reports',{p_all:ST.allRep}),rpc('admin_clubs'),rpc('get_announcements',{p_limit:20}).catch(()=>[]),rpc('admin_challenges').catch(()=>null),rpc('admin_abo_state').catch(()=>null)]);
+    ST.o=o;ST.d=d||[];ST.users=u||[];ST.reports=r||[];ST.clubs=c||[];ST.ann=an||[];ST.chal=ch;ST.abo=ab;ST.err='';ST.at=new Date()}
   catch(e){ST.err=e.code==='PGRST202'?'Die Datenbank ist nicht aktuell: Bitte die neue SQL-Datei in Supabase ausführen.':e.message}
   render();if(m)m.classList.remove('loading')}
 
@@ -225,7 +227,7 @@ function render(){const m=$('#main');if(!m)return;m.innerHTML='';$('#stamp').tex
   m.append(annSec());m.append(chalSec());
   m.append(reportsSec());
   // Nutzer + Clubs
-  const s4=el('section');s4.append(el('h3',null,'Nutzer und Clubs'));const ug=el('div','grid');ug.style.gridTemplateColumns='minmax(0,2fr) minmax(0,1fr)';if(innerWidth<900)ug.style.gridTemplateColumns='1fr';ug.append(usersCard(),clubsCard(),newUserCard());s4.append(ug);m.append(s4);
+  const s4=el('section');s4.append(el('h3',null,'Nutzer und Clubs'));const ug=el('div','grid');ug.style.gridTemplateColumns='minmax(0,2fr) minmax(0,1fr)';if(innerWidth<900)ug.style.gridTemplateColumns='1fr';ug.append(usersCard(),clubsCard(),newUserCard(),aboCard());s4.append(ug);m.append(s4);{const s5=el('section');s5.append(el('h3',null,'Moderation'),modCard());m.append(s5)}
   m.append(linksSec())}
 function tile(l,v,h,raw){const c=el('div','card tile');c.append(el('div','lbl',l),el('div','val',raw?String(v).replace('.',','):fmtN(v)));if(h)c.append(el('div','hint',h));return c}
 function repTile(n){const c=el('div','card tile'+(n?' alert':''));c.append(el('div','lbl','Offene Meldungen'));const v=el('div','val',fmtN(n));c.append(v);
@@ -293,6 +295,12 @@ function usersCard(){const c=el('div','card');const hd=el('div','chead');const t
   const w=el('div','tscroll'),t=el('table');t.innerHTML='<thead><tr><th>Benutzer</th><th>Seit</th><th>Zuletzt</th><th class="n">Tage</th><th class="n">Starts</th><th class="n">Geteilt</th><th>Version</th><th>Pro</th></tr></thead>';const bd=el('tbody');t.append(bd);w.append(t);c.append(w);
   const fill=()=>{bd.innerHTML='';if(!ST.users.length){const r=el('tr'),d=el('td','empty','Keine Nutzer gefunden.');d.colSpan=8;r.append(d);bd.append(r)}
     ST.users.slice(0,ST.uN||25).forEach(u=>{const r=el('tr');const n=el('td');n.append(el('b',null,'@'+u.username));if(u.is_admin)n.append(' ',el('span','badge','Admin'));const sub=el('div','stamp',[u.display_name,u.email].filter(Boolean).join(' · '));n.append(sub);
+      if(u.banned_until){n.append(el('div','banmsg','⛔ Gesperrt '+(String(u.banned_until).startsWith('infinity')?'für immer':'bis '+dLong(u.banned_until))+(u.ban_reason?' · '+u.ban_reason:'')))}
+      if(!u.is_admin){const ua=el('div','uacts');
+        if(u.banned_until)ua.append(btnA('Entsperren','',()=>act('admin_ban_user',{p_user:u.id,p_days:0,p_reason:''}),'@'+u.username+' entsperren?'));
+        else ua.append(btnA('Sperren','danger',async()=>{const v=prompt('@'+u.username+' sperren – wie viele Tage? (z. B. 7 oder 30; leer = für immer)','7');if(v===null)return;const d=v.trim()===''?-1:parseInt(v,10);if(!(d===-1||d>0)){alert('Bitte eine Zahl eingeben.');return}
+          const why=prompt('Grund (freiwillig, nur für dich sichtbar):','')||'';await act('admin_ban_user',{p_user:u.id,p_days:d,p_reason:why})}));
+        ua.append(btnA('Löschen','danger',()=>act('admin_delete_user',{p_user:u.id}),'Konto @'+u.username+' mit allen Inhalten wirklich löschen? Das kann man nicht rückgängig machen.'));n.append(ua)}
       r.append(n,el('td',null,dLong(u.created_at)),el('td',null,u.last_day?dLong(u.last_day):'–'),el('td','n',fmtN(u.days_30)),el('td','n',fmtN(u.opens_30)),el('td','n',fmtN(u.shared)),el('td',null,u.version||'–'),proCell(u));bd.append(r)});more.hidden=ST.users.length<=(ST.uN||25);more.textContent='Mehr zeigen ('+(ST.users.length-(ST.uN||25))+' weitere)'};
   const more=el('button','tbtn');more.style.marginTop='10px';more.onclick=()=>{ST.uN=(ST.uN||25)+50;fill()};c.append(more);fill();return c}
 function proCell(u){const d=el('td');const k=u.pro||'';
@@ -301,6 +309,43 @@ function proCell(u){const d=el('td');const k=u.pro||'';
   if(k!=='admin'){if(k==='gift')d.append(' ',btnA('Weg','',()=>act('admin_set_pro',{p_user:u.id,p_days:0}),'Geschenktes Pro für @'+u.username+' entfernen?'));
     else if(!k)d.append(' ',btnA('Schenken','',async()=>{const v=prompt('Linefact Pro für @'+u.username+' schenken – wie viele Tage? (leer = unbegrenzt)','');if(v===null)return;const n=v.trim()===''?-1:parseInt(v,10);if(!(n===-1||n>0)){alert('Bitte eine Zahl eingeben.');return}await act('admin_set_pro',{p_user:u.id,p_days:n})}))}
   return d}
+// ---------- Moderation: Kommentare, Beiträge ----------
+function modCard(){const c=el('div','card');ST.mod=ST.mod||{tab:'comments',q:'',list:null};const M=ST.mod;
+  c.append(el('p','sub','Neueste zuerst. Löschen geht sofort und kann nicht rückgängig gemacht werden. Konten sperren oder löschen kannst du oben bei den Nutzern.'));
+  const tb=el('div','acts');const tabB=(k,t)=>{const b=el('button','tbtn'+(M.tab===k?' on':''),t);b.type='button';b.onclick=()=>{M.tab=k;M.list=null;M.q='';render()};return b};tb.append(tabB('comments','Kommentare'),tabB('contents','Beiträge & Aktivitäten'));c.append(tb);
+  const q=el('input','anin');q.type='search';q.placeholder='Suchen (Text oder Benutzername) …';q.value=M.q;q.style.margin='8px 0';let tm;q.oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{M.q=q.value.trim();load()},350)};c.append(q);
+  const L=el('div','modl');c.append(L);
+  const draw=()=>{L.innerHTML='';if(M.list==null){L.append(el('p','empty','Lade …'));return}if(!M.list.length){L.append(el('p','empty','Nichts gefunden.'));return}
+    M.list.forEach(x=>{const d=el('div','rep');const when=new Date(x.created_at).toLocaleString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      if(M.tab==='comments'){d.append(el('div','meta',when+' · @'+x.author_username+' bei „'+(x.act_name||'Beitrag')+'“ von @'+(x.act_owner_username||'?')),el('div','ctx',x.body));
+        const a=el('div','acts');a.append(btnA('Kommentar löschen','danger',async()=>{await rpc('admin_delete_comment',{p_id:x.id});M.list=M.list.filter(y=>y.id!==x.id);draw()},'Diesen Kommentar löschen?'));d.append(a)}
+      else{const typ=x.mode==='post'?'Beitrag':x.mode==='mx'?'Motocross':x.mode==='race'?'Enduro Race':'Enduro';d.append(el('div','meta',when+' · '+typ+' · @'+(x.owner_username||'?')+(x.group_name?' · Club '+x.group_name:'')+(x.photos?' · '+x.photos+' Foto'+(x.photos>1?'s':''):'')));
+        d.append(el('b',null,x.name||''));if(x.body)d.append(el('div','ctx',x.body));
+        const a=el('div','acts');a.append(btnA('Entfernen','danger',async()=>{const why=prompt('Grund (freiwillig):','')||'';await rpc('admin_remove_content',{p_activity:x.id,p_reason:why});M.list=M.list.filter(y=>y.id!==x.id);draw()},'Diesen Inhalt für alle entfernen?'));d.append(a)}
+      L.append(d)})};
+  const load=async()=>{M.list=null;draw();try{M.list=(await rpc(M.tab==='comments'?'admin_comments':'admin_contents',{p_query:M.q,p_limit:100}))||[]}catch(e){M.list=[];L.innerHTML='';L.append(el('p','empty',/admin_comments|admin_contents/.test(e.message||'')?'Bitte zuerst das neue splitline-supabase.sql in Supabase ausführen.':'Fehler: '+e.message));return}draw()};
+  if(M.list==null)setTimeout(load,0);else draw();return c}
+// ---------- Abo-Schalter ----------
+function aboCard(){const c=el('div','card');const A=ST.abo;c.append(el('h2',null,'Abo (Linefact Pro)'));
+  if(!A){c.append(el('p','sub','Bitte zuerst das neue splitline-supabase.sql in Supabase ausführen.'));return c}
+  if(ST.aboMsg){const m=el('p','clubmsg',ST.aboMsg);m.setAttribute('role','status');c.append(m);ST.aboMsg=''}
+  const st=el('p',null);st.style.cssText='font-weight:700;margin:4px 0 6px';
+  if(!A.abo){st.textContent='Jetzt: Alles gratis';c.append(st,el('p','sub','Alle Nutzer haben alles. In der App gibt es keine Kaufseite, keine Schlösser und keine Pro-Hinweise.'));
+    c.append(el('p','sub','Abo starten erst, wenn der Vertrag „Bezahlte Apps“ aktiv ist und Apple die App-Version mit den Abos freigegeben hat. Nur diese und neuere Versionen zeigen dann die Kaufseite; ältere Versionen zeigen „Bitte im App Store aktualisieren“.'));
+    const sel=el('select','anin');[['3','Bisherige Nutzer: 3 Monate Pro geschenkt'],['1','1 Monat'],['6','6 Monate'],['12','12 Monate'],['-1','Pro für immer'],['0','nichts geschenkt']].forEach(([v,t])=>sel.append(new Option(t,v)));sel.setAttribute('aria-label','Geschenk für bisherige Nutzer');
+    const go=el('button','primary','Abo starten');go.type='button';go.onclick=async()=>{const v=+sel.value,t=sel.options[sel.selectedIndex].text.replace('Bisherige Nutzer: ','');
+      if(!confirm('Abo wirklich starten?\n\nAlle '+A.users+' bisherigen Nutzer bekommen: '+t+'.\nDanach sehen alle in der App die Kaufseite.'))return;go.disabled=true;
+      try{const n=await rpc('admin_start_abo',{p_months:v});ST.aboMsg='✓ Abo gestartet. '+(v===0?'Keine Geschenke.':n+' Nutzer haben '+(v<0?'Pro für immer':t+' Pro')+' bekommen.');await loadAll()}catch(e){go.disabled=false;alert('Hat nicht geklappt: '+e.message)}};
+    const row=el('div');row.style.cssText='display:flex;flex-direction:column;gap:8px;margin:8px 0 12px';row.append(sel,go);c.append(row)}
+  else{st.textContent='Jetzt: Abo läuft (seit '+new Date(A.started).toLocaleDateString('de-AT')+')';c.append(st,el('p','sub','Geschenk für frühe Nutzer: '+({forever:'Pro für immer',none:'keins'}[A.grant]||String(A.grant||'').replace('months','Monate'))+'.'));
+    c.append(btnA('Zurück auf „Alles gratis“','',async()=>{await rpc('admin_stop_abo');ST.aboMsg='✓ Wieder alles gratis.';await loadAll()},'Wirklich zurück auf „Alles gratis“? Bezahlte Abos laufen bei Apple weiter.'))}
+  // Abo-Vorschau
+  c.append(el('h3',null,'Abo-Vorschau'),el('p','sub','Diese Konten sehen die App schon mit Abo (Kaufseite, Schlösser) – z. B. dein Demo-Konto für die Apple-Prüfung oder du selbst zum Testen.'));
+  const ul=el('div');ul.style.cssText='display:flex;flex-direction:column;gap:6px;margin:6px 0';(A.preview||[]).forEach(p=>{const r=el('div');r.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:8px';r.append(el('span',null,(p.display_name?p.display_name+' ':'')+'@'+p.username),btnA('Entfernen','danger',async()=>{await rpc('admin_set_preview',{p_username:p.username,p_on:false});await loadAll()}));ul.append(r)});
+  if(!(A.preview||[]).length)ul.append(el('p','empty','Noch kein Konto.'));c.append(ul);
+  const inp=el('input','anin');inp.placeholder='Benutzername, z. B. linefact.demo';inp.autocomplete='off';const add=el('button','tbtn','Hinzufügen');add.type='button';const inf=el('p','sub');
+  add.onclick=async()=>{const u=inp.value.trim().replace(/^@/,'').toLowerCase();if(!u)return;add.disabled=true;try{await rpc('admin_set_preview',{p_username:u,p_on:true});await loadAll()}catch(e){add.disabled=false;inf.textContent=/not_found/.test(e.message)?'Diesen Benutzernamen gibt es nicht.':'Fehler: '+e.message}};
+  const r2=el('div');r2.style.cssText='display:flex;gap:6px;align-items:center';inp.style.flex='1';r2.append(inp,add);c.append(r2,inf);return c}
 // ---------- Nutzer von Hand anlegen ----------
 function newUserCard(){const c=el('div','card');c.append(el('h2',null,'Nutzer hinzufügen'),el('p','sub','Legt ein fertiges Konto an (E-Mail ist gleich bestätigt). Gib der Person E-Mail und Passwort weiter – sie kann das Passwort in der App unter Mehr › Profil ändern.'));
   const L=(t,i)=>{const l=el('label','annl');l.append(el('span',null,t),i);return l};const inp=(ty,ph,ac)=>{const i=el('input','anin');i.type=ty;i.placeholder=ph;if(ac)i.autocomplete=ac;return i};
