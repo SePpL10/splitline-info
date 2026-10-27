@@ -106,6 +106,11 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .rep .acts{display:flex;gap:6px;flex-wrap:wrap}
 .annl{display:flex;flex-direction:column;gap:4px;margin:8px 0;font-size:.85rem;font-weight:600}
 .anin{width:100%;font:inherit;font-weight:400;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 10px}
+a.primary{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.mfaqr{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin:10px 0}.mfaqr img{width:180px;height:180px;background:#fff;border-radius:12px;padding:8px}
+.mfacode{font:600 1.4rem/1.2 ui-monospace,Menlo,monospace;letter-spacing:.3em;text-align:center;max-width:220px}
+.secret{font:500 .85rem ui-monospace,Menlo,monospace;word-break:break-all;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 8px;display:inline-block}
+.okline{color:var(--good,#1a7f37);font-weight:700}.ampel{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
 .anntb{display:flex;gap:6px;margin:4px 0}.anntb .tbtn{min-width:36px;font-weight:800}
 .annprev{margin-top:12px}.apcard{max-width:380px;border-radius:18px;overflow:hidden;background:linear-gradient(135deg,#1E50FF,#1438C8);color:#fff;margin-top:6px}
 .apbar{display:flex;gap:10px;align-items:center;padding:12px 14px 0}.apbar .apav{width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-weight:800}
@@ -165,6 +170,14 @@ async function req(path,body,tok){const h={apikey:CFG.sbKey,'Content-Type':'appl
   let r;try{r=await fetch(CFG.sbUrl+path,{method:'POST',headers:h,body:JSON.stringify(body||{})})}catch(e){throw new Error('Keine Verbindung zum Server.')}
   const t=await r.text();let j=null;try{j=t?JSON.parse(t):null}catch(e){}
   if(!r.ok){const e=new Error((j&&(j.message||j.msg||j.error_description))||('Fehler '+r.status));e.status=r.status;e.code=j&&(j.code||j.error);throw e}return j}
+async function reqM(method,path,body,tok){const h={apikey:CFG.sbKey,'Content-Type':'application/json'};if(tok)h.Authorization='Bearer '+tok;
+  let r;try{r=await fetch(CFG.sbUrl+path,{method,headers:h,body:method==='GET'||method==='DELETE'?undefined:JSON.stringify(body||{})})}catch(e){throw new Error('Keine Verbindung zum Server.')}
+  const t=await r.text();let j=null;try{j=t?JSON.parse(t):null}catch(e){}
+  if(!r.ok){const e=new Error((j&&(j.message||j.msg||j.error_description))||('Fehler '+r.status));e.status=r.status;e.code=j&&(j.code||j.error_code||j.error);throw e}return j}
+function setSes(j){SES={at:j.access_token,rt:j.refresh_token,exp:Date.now()+j.expires_in*1000};ss.set('lfa_ses',SES)}
+async function mfaVerify(fid,code){const tok=await token();const ch=await reqM('POST','/auth/v1/factors/'+fid+'/challenge',{},tok);
+  const j=await reqM('POST','/auth/v1/factors/'+fid+'/verify',{challenge_id:ch.id,code:String(code).replace(/\s/g,'')},tok);if(j&&j.access_token)setSes(j);return j}
+async function mfaFactors(){const u=await reqM('GET','/auth/v1/user',null,await token());return (u&&u.factors||[]).filter(f=>f.factor_type==='totp')}
 async function token(){if(!SES)throw new Error('Nicht angemeldet');if(Date.now()<SES.exp-60000)return SES.at;
   const j=await req('/auth/v1/token?grant_type=refresh_token',{refresh_token:SES.rt},null);SES={at:j.access_token,rt:j.refresh_token,exp:Date.now()+j.expires_in*1000};ss.set('lfa_ses',SES);return SES.at}
 async function rpc(fn,args){return req('/rest/v1/rpc/'+fn,args||{},await token())}
@@ -185,10 +198,22 @@ function logo(){const d=el('div','logo');d.innerHTML='<svg viewBox="0 0 100 100"
 async function start(){if(!SES){showLogin();return}
   try{const p=await rpc('get_my_profile',{});if(!p||!p[0]||!p[0].is_admin){showLogin('Dieses Konto hat kein Admin-Recht. In Supabase › Tabellen › profiles bei deinem Konto is_admin = true setzen.');ss.del('lfa_ses');SES=null;return}ST.me=p[0]}
   catch(e){if(e.status===400||e.status===401){logout();return}showLogin(e.message);return}
+  try{ST.mfa=await rpc('admin_mfa_state',{})}catch(e){ST.mfa=null}
+  if(ST.mfa&&ST.mfa.enrolled&&ST.mfa.aal!=='aal2'){showMfa();return}
   shell();await loadAll()}
+function showMfa(msg){const a=$('#app');a.innerHTML='';const w=el('div','login'),c=el('div','card');
+  const h=el('div');h.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:6px';h.append(logo(),el('div','brand','Linefact Admin'));
+  const f=document.createElement('form');f.innerHTML='<label for="lc">Code aus der Passwörter-App (6 Ziffern)</label><input id="lc" class="mfacode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" maxlength="7" required><button class="primary" type="submit">Bestätigen</button><p class="err" id="le" role="alert"></p>';
+  const back=el('button','tbtn','Abbrechen');back.type='button';back.onclick=logout;
+  c.append(h,el('p','sub','2-Faktor-Anmeldung: Öffne am iPhone Einstellungen › Passwörter (oder die App „Passwörter“) › Linefact Admin und gib den Code ein. Am iPhone schlägt Safari den Code oft direkt über der Tastatur vor.'),f,back);w.append(c);a.append(w);
+  const inp=f.querySelector('#lc');inp.focus();if(msg)f.querySelector('#le').textContent=msg;
+  f.onsubmit=async e=>{e.preventDefault();const b=f.querySelector('button');b.disabled=true;f.querySelector('#le').textContent='';
+    try{const fs=(await mfaFactors()).filter(x=>x.status==='verified');if(!fs.length)throw new Error('Kein 2-Faktor-Gerät gefunden.');
+      let ok=null,err=null;for(const x of fs){try{await mfaVerify(x.id,inp.value);ok=x;break}catch(y){err=y}}if(!ok)throw err;start()}
+    catch(x){f.querySelector('#le').textContent=/invalid|code/i.test(x.message)?'Der Code stimmt nicht (oder ist abgelaufen). Nimm den aktuellen Code.':x.message;b.disabled=false;inp.select()}}}
 async function loadAll(){const m=$('#main');if(m)m.classList.add('loading');
-  try{const[o,d,u,r,c,an,ch,ab]=await Promise.all([rpc('admin_overview'),rpc('admin_daily',{p_days:ST.days}),rpc('admin_users',{p_query:ST.q,p_limit:200}),rpc('admin_reports',{p_all:ST.allRep}),rpc('admin_clubs'),rpc('get_announcements',{p_limit:20}).catch(()=>[]),rpc('admin_challenges').catch(()=>null),rpc('admin_abo_state').catch(()=>null)]);
-    ST.o=o;ST.d=d||[];ST.users=u||[];ST.reports=r||[];ST.clubs=c||[];ST.ann=an||[];ST.chal=ch;ST.abo=ab;ST.err='';ST.at=new Date()}
+  try{const[o,d,u,r,c,an,ch,ab,mu,se]=await Promise.all([rpc('admin_overview'),rpc('admin_daily',{p_days:ST.days}),rpc('admin_users',{p_query:ST.q,p_limit:200}),rpc('admin_reports',{p_all:ST.allRep}),rpc('admin_clubs'),rpc('get_announcements',{p_limit:20}).catch(()=>[]),rpc('admin_challenges').catch(()=>null),rpc('admin_abo_state').catch(()=>null),rpc('admin_map_usage',{p_days:62}).catch(()=>null),rpc('admin_settings').catch(()=>null)]);
+    ST.o=o;ST.d=d||[];ST.users=u||[];ST.reports=r||[];ST.clubs=c||[];ST.ann=an||[];ST.chal=ch;ST.abo=ab;ST.map=mu;ST.set=se;ST.err='';ST.at=new Date()}
   catch(e){ST.err=e.code==='PGRST202'?'Die Datenbank ist nicht aktuell: Bitte die neue SQL-Datei in Supabase ausführen.':e.message}
   render();if(m)m.classList.remove('loading')}
 
@@ -223,11 +248,13 @@ function render(){const m=$('#main');if(!m)return;m.innerHTML='';$('#stamp').tex
   const MN={mx:'Motocross',enduro:'Enduro',race:'Enduro Race',post:'Beiträge'};
   g3.append(hbarCard('Geteilt nach Art','alle Zeit',Object.entries(o.modes||{}).map(([k,v])=>[MN[k]||k,v]).sort((a,b)=>b[1]-a[1])),
     hbarCard('App-Versionen','Nutzer je Version, letzte 30 Tage',(o.versions||[]).map(x=>[x.version,x.users])),storageCard(o));s2.append(g3);m.append(s2);
+  m.append(mapSec());
   // Meldungen
-  m.append(annSec());m.append(chalSec());
+  m.append(annSec());m.append(welSec());m.append(chalSec());
   m.append(reportsSec());
   // Nutzer + Clubs
   const s4=el('section');s4.append(el('h3',null,'Nutzer und Clubs'));const ug=el('div','grid');ug.style.gridTemplateColumns='minmax(0,2fr) minmax(0,1fr)';if(innerWidth<900)ug.style.gridTemplateColumns='1fr';ug.append(usersCard(),clubsCard(),newUserCard(),aboCard());s4.append(ug);m.append(s4);{const s5=el('section');s5.append(el('h3',null,'Moderation'),modCard());m.append(s5)}
+  m.append(appLinksSec());m.append(secSec());
   m.append(linksSec())}
 function tile(l,v,h,raw){const c=el('div','card tile');c.append(el('div','lbl',l),el('div','val',raw?String(v).replace('.',','):fmtN(v)));if(h)c.append(el('div','hint',h));return c}
 function repTile(n){const c=el('div','card tile'+(n?' alert':''));c.append(el('div','lbl','Offene Meldungen'));const v=el('div','val',fmtN(n));c.append(v);
@@ -245,7 +272,7 @@ function drawChart(box,D,key,kind,title){const W=560,H=210,L=34,R=10,T=14,B=26,n
   const X=i=>L+(n<=1?pw/2:kind==='bar'?(i+.5)*pw/n:i*pw/(n-1)),Y=v=>T+ph-(v/mx)*ph;const NS='http://www.w3.org/2000/svg';const sv=document.createElementNS(NS,'svg');sv.setAttribute('viewBox','0 0 '+W+' '+H);sv.setAttribute('role','img');
   const total=vals.reduce((a,b)=>a+b,0);sv.setAttribute('aria-label',title+': '+n+' Tage, höchster Wert '+Math.max(...vals)+', zusammen '+total);
   const mk=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);(p||sv).append(e);return e};
-  const gg=mk('g',{class:'grid'});for(let k=0;k<=4;k++){const v=mx*k/4,y=Y(v);if(k)mk('line',{x1:L,x2:W-R,y1:y,y2:y},gg);const tx=mk('text',{x:L-6,y:y+4,'text-anchor':'end'});tx.textContent=v>=1000?Math.round(v/1000)+'K':String(Math.round(v*10)/10)}
+  const gg=mk('g',{class:'grid'});for(let k=0;k<=4;k++){const v=mx*k/4,y=Y(v);if(k)mk('line',{x1:L,x2:W-R,y1:y,y2:y},gg);const tx=mk('text',{x:L-6,y:y+4,'text-anchor':'end'});tx.textContent=v>=1000?String(Math.round(v/100)/10).replace('.',',')+'K':String(Math.round(v*10)/10)}
   mk('line',{x1:L,x2:W-R,y1:Y(0),y2:Y(0),class:'base'});
   const step=Math.max(1,Math.ceil(n/7));D.forEach((x,i)=>{if(i%step&&i!==n-1)return;if(i!==n-1&&n-1-i<step*.6)return;const tx=mk('text',{x:X(i),y:H-8,'text-anchor':i===0&&kind!=='bar'?'start':i===n-1&&kind!=='bar'?'end':'middle'});tx.textContent=dShort(x.day)});
   const col=getComputedStyle(document.documentElement).getPropertyValue('--series').trim(),wash=getComputedStyle(document.documentElement).getPropertyValue('--series-wash').trim(),surf=getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
@@ -463,6 +490,87 @@ function chalSec(){const s=el('section');s.append(el('h3',null,'Challenges für 
   s.append(c);return s}
 
 // ---------- Schnellzugriff ----------
+// ---------- Karten (Mapbox) ----------
+function mapSec(){const s=el('section');s.append(el('h3',null,'Karten (Mapbox)'));
+  if(ST.map==null){const c=el('div','card');c.append(el('p','empty','Noch keine Zahlen – erst ab App-Version 1.0.56 (die SQL-Datei 1.0.56 muss in Supabase laufen).'));s.append(c);return s}
+  const rows=ST.map||[],by={};rows.forEach(x=>by[x.day]=x);const now=new Date(),ym=now.toISOString().slice(0,7);
+  let mt=0,ms=0;rows.forEach(x=>{if(String(x.day).slice(0,7)===ym){mt+=+x.tiles||0;ms+=+x.statics||0}});
+  const D=[];for(let i=29;i>=0;i--){const d=new Date(now.getTime()-i*864e5).toISOString().slice(0,10);const x=by[d]||{};D.push({day:d,tiles:+x.tiles||0,statics:+x.statics||0})}
+  const g=el('div','grid g2');const c=el('div','card');c.append(el('h2',null,'Abrufe in diesem Monat'),el('p','sub','Gratis bei Mapbox pro Monat: 200.000 Kartenkacheln und 50.000 Vorschaubilder. Die Apps melden ihre Zahlen einmal am Tag – gestern und heute fehlen oft noch. Es ist eine Schätzung, die genauen Zahlen stehen bei Mapbox unter „Statistics“.'));
+  const dm=new Date(now.getFullYear(),now.getMonth()+1,0).getDate(),day=now.getDate();
+  [['Kartenkacheln',mt,200000],['Vorschaubilder',ms,50000]].forEach(([l,v,lim])=>{const p=Math.min(100,v/lim*100),fc=v/Math.max(1,day)*dm,pf=fc/lim*100;const m=el('div','meter'),r=el('div','row');
+    const am=el('span','ampel');am.style.background=pf>=80||p>=80?'var(--bad,#cf222e)':pf>=50||p>=50?'var(--warn,#bf8700)':'var(--good,#1a7f37)';const b=el('b');b.append(am,document.createTextNode(l));
+    r.append(b,el('span',null,fmtN(v)+' von '+fmtN(lim)+' · '+Math.round(p)+' %'));const tr=el('div','tr'),fl=el('div','fl'+(p>80?' crit':p>50?' warn':''));fl.style.width=Math.max(1,p)+'%';tr.append(fl);
+    tr.setAttribute('role','meter');tr.setAttribute('aria-valuenow',Math.round(p));tr.setAttribute('aria-valuemin',0);tr.setAttribute('aria-valuemax',100);tr.setAttribute('aria-label',l);m.append(r,tr,el('div','sub','Hochgerechnet bis Monatsende: etwa '+fmtN(Math.round(fc))+' ('+Math.round(pf)+' %)'));c.append(m)});
+  c.append(el('p','sub','Grün = unter 50 %, Gelb = ab 50 %, Rot = ab 80 % (hochgerechnet). Fällt Mapbox aus, zeigt die App automatisch die freie Karte (OpenTopoMap).'));
+  g.append(c,chartCard('Kartenkacheln pro Tag','Letzte 30 Tage · zusammen '+fmtN(D.reduce((a,x)=>a+x.tiles,0)),D,'tiles','bar'));s.append(g);return s}
+
+// ---------- Begrüßung beim ersten Start ----------
+const WEL={img:undefined};
+function welSec(){const s=el('section');s.append(el('h3',null,'Begrüßung beim ersten App-Start'));const c=el('div','card');const S=ST.set||{};
+  if(!ST.set){c.append(el('p','empty','Braucht die SQL-Datei 1.0.56.'));s.append(c);return s}
+  if(WEL.img===undefined)WEL.img=S.welcome_image||null;
+  c.append(el('p','sub','Erscheint genau einmal: beim ersten Öffnen der App (neue Nutzer – und alle, die auf Version 1.0.56 aktualisieren) ganz oben unter Aktivität. Danach nie wieder, auch wenn du den Text hier änderst.'));
+  const lab=(t,inp)=>{const l=el('label','annl');l.append(el('span',null,t),inp);return l};
+  const on=document.createElement('input');on.type='checkbox';on.checked=!!S.welcome_on;const onl=el('label');onl.style.cssText='display:flex;gap:8px;align-items:center;font-weight:700;margin:4px 0 8px';onl.append(on,document.createTextNode('Begrüßung zeigen'));
+  const ti=el('input');ti.type='text';ti.maxLength=80;ti.className='anin';ti.placeholder='z. B. „Willkommen bei Linefact!“';ti.value=S.welcome_title||'';
+  const ta=document.createElement('textarea');ta.rows=6;ta.maxLength=2000;ta.className='anta';ta.placeholder='Text … (**fett**, *kursiv*, - Aufzählung, [Link](https://…))';ta.value=S.welcome_body||'';
+  const fi=el('input');fi.type='file';fi.accept='image/*';fi.className='anin';const ii=el('span','sub',WEL.img?'Bild gespeichert':'');const ix=el('button','tbtn','Bild entfernen');ix.type='button';ix.hidden=!WEL.img;
+  fi.onchange=async()=>{const f=fi.files&&fi.files[0];if(!f)return;ii.textContent='Wird verkleinert …';try{WEL.img=await annImage(f);ii.textContent='Bild bereit';ix.hidden=false}catch(e){ii.textContent=e.message}};
+  ix.onclick=()=>{WEL.img=null;fi.value='';ii.textContent='';ix.hidden=true};
+  const lt=el('input');lt.type='text';lt.maxLength=40;lt.className='anin';lt.placeholder='Knopf-Text';lt.value=S.welcome_link_text||'';
+  const lu=el('input');lu.type='url';lu.maxLength=300;lu.className='anin';lu.placeholder='https://…';lu.value=S.welcome_link||'';
+  const go=el('button','primary','Speichern');go.type='button';const info=el('p','sub');
+  go.onclick=async()=>{info.textContent='';const u=lu.value.trim();if(on.checked&&!ta.value.trim()){info.textContent='Bitte einen Text schreiben.';return}if(u&&!/^https:\/\//.test(u)){info.textContent='Der Link muss mit https:// beginnen.';return}
+    go.disabled=true;try{await rpc('admin_set_welcome',{p_on:on.checked,p_title:ti.value.trim(),p_body:ta.value.trim(),p_image:WEL.img||'',p_link:u,p_link_text:lt.value.trim()});info.textContent='Gespeichert.';info.className='sub okline';ST.set=await rpc('admin_settings')}
+    catch(e){info.textContent=/image_invalid/.test(e.message)?'Das Bild geht nicht.':/link_invalid/.test(e.message)?'Der Link muss mit https:// beginnen.':e.message}go.disabled=false};
+  const imgRow=el('div');imgRow.style.cssText='display:flex;gap:8px;align-items:center;flex-wrap:wrap';imgRow.append(fi,ix,ii);
+  const lnk=el('div');lnk.style.cssText='display:grid;grid-template-columns:1fr 2fr;gap:8px';lnk.append(lab('Knopf-Text',lt),lab('Knopf-Link',lu));
+  const row=el('div');row.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0 4px';row.append(go,info);
+  c.append(onl,lab('Titel',ti),lab('Text',ta),lab('Bild (freiwillig)',imgRow),lnk,row);s.append(c);return s}
+
+// ---------- Links zu den Uhr-Apps ----------
+function appLinksSec(){const s=el('section');s.append(el('h3',null,'Uhr-Apps (Links in der iPhone-App)'));const c=el('div','card');const S=ST.set;
+  if(!S){c.append(el('p','empty','Braucht die SQL-Datei 1.0.56.'));s.append(c);return s}
+  c.append(el('p','sub','Erscheinen in der App unter Mehr › Uhr verbinden. Leer = „Bald im Store“. Wirkt sofort, ohne App-Update.'));
+  const lab=(t,inp)=>{const l=el('label','annl');l.append(el('span',null,t),inp);return l};
+  const g=el('input');g.type='url';g.className='anin';g.placeholder='https://apps.garmin.com/apps/…';g.value=S.garmin_url||'';
+  const r=el('input');r.type='url';r.className='anin';r.placeholder='https://apps.apple.com/app/id…';r.value=S.ride_url||'';
+  const go=el('button','primary','Speichern');go.type='button';const info=el('p','sub');
+  go.onclick=async()=>{info.className='sub';info.textContent='';if([g,r].some(x=>x.value.trim()&&!/^https:\/\//.test(x.value.trim()))){info.textContent='Links müssen mit https:// beginnen.';return}
+    go.disabled=true;try{await rpc('admin_set_links',{p_garmin:g.value.trim(),p_ride:r.value.trim()});info.textContent='Gespeichert.';info.className='sub okline';ST.set=await rpc('admin_settings')}catch(e){info.textContent=e.message}go.disabled=false};
+  const row=el('div');row.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0 4px';row.append(go,info);
+  c.append(lab('Garmin (Connect IQ Store)',g),lab('Apple Watch (Linefact Ride im App Store)',r),row);s.append(c);return s}
+
+// ---------- Sicherheit: 2-Faktor + Sicherung ----------
+function secSec(){const s=el('section');s.append(el('h3',null,'Sicherheit'));const g=el('div','grid g2');g.append(mfaCard(),backupCard());s.append(g);return s}
+function mfaCard(){const c=el('div','card');c.append(el('h2',null,'2-Faktor-Anmeldung'));const M=ST.mfa;
+  if(!M){c.append(el('p','empty','Braucht die SQL-Datei 1.0.56.'));return c}
+  if(M.enrolled){c.append(el('p','okline','✓ Eingeschaltet'),el('p','sub','Beim Anmelden fragt die Seite nach dem 6-stelligen Code aus der Passwörter-App. Ohne Code funktionieren die Admin-Funktionen nicht – auch nicht mit gestohlenem Passwort.'),
+      el('p','sub','Handy verloren? In Supabase › Authentication › Users › dein Konto › „Multi-factor authentication“ den Faktor löschen, dann hier neu einrichten.'));
+    c.append(btnA('Ausschalten','danger',async()=>{try{const fs=await mfaFactors();for(const f of fs)await reqM('DELETE','/auth/v1/factors/'+f.id,null,await token());await reqM('POST','/auth/v1/token?grant_type=refresh_token',{refresh_token:SES.rt},null).then(setSes).catch(()=>{});ST.mfa=await rpc('admin_mfa_state',{});render()}catch(e){alert(e.message)}},'2-Faktor-Anmeldung wirklich ausschalten? Dann reicht wieder das Passwort.'));return c}
+  c.append(el('p','sub','Schützt die Admin-Seite zusätzlich mit einem 6-stelligen Code, der sich alle 30 Sekunden ändert. Am iPhone speichert die App „Passwörter“ den Code und füllt ihn mit Face ID aus.'));
+  const box=el('div');const b=el('button','primary','Einrichten');b.type='button';
+  b.onclick=async()=>{b.disabled=true;box.innerHTML='';try{const tok=await token();
+      for(const f of await mfaFactors())if(f.status!=='verified')await reqM('DELETE','/auth/v1/factors/'+f.id,null,tok).catch(()=>{});
+      const j=await reqM('POST','/auth/v1/factors',{factor_type:'totp',friendly_name:'Linefact Admin '+new Date().toISOString().slice(0,16),issuer:'Linefact Admin'},tok);
+      const t=j.totp||{};const q=el('div','mfaqr');if(t.qr_code){const im=document.createElement('img');const q0=String(t.qr_code),k0=q0.indexOf(',');im.src=/^data:[^,]*;base64,/.test(q0)?q0:'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(/^data:/.test(q0)?q0.slice(k0+1):q0);im.alt='QR-Code für die Passwörter-App';q.append(im)}
+      const st=el('div');st.style.cssText='flex:1;min-width:220px';
+      const ol=document.createElement('a');ol.href=t.uri||'#';ol.className='primary';ol.textContent='Am iPhone: In „Passwörter“ öffnen';ol.style.cssText='display:inline-block;padding:9px 14px;border-radius:999px;text-decoration:none;margin:4px 0 8px';
+      st.append(el('p','sub','1. Am Mac: QR-Code mit der iPhone-Kamera scannen › „Bestätigungscode-Einrichtung“ antippen. Oder am iPhone direkt diesen Knopf:'),ol,
+        el('p','sub','Speichern beim Eintrag „Linefact Admin“ (oder beim Passwort für diese Seite).'),el('p','sub','Geht nicht? Schlüssel von Hand eintragen:'),el('span','secret',t.secret||''));
+      q.append(st);const f=document.createElement('form');f.innerHTML='<label class="annl"><span>2. Den Code aus der Passwörter-App hier eingeben</span><input class="anin mfacode" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required></label><button class="primary" type="submit">Bestätigen und einschalten</button><p class="err" role="alert"></p>';
+      f.onsubmit=async e=>{e.preventDefault();const sb=f.querySelector('button'),er=f.querySelector('.err');sb.disabled=true;er.textContent='';
+        try{await mfaVerify(j.id,f.querySelector('input').value);ST.mfa=await rpc('admin_mfa_state',{});render();alert('2-Faktor-Anmeldung ist eingeschaltet. Ab jetzt fragt die Seite beim Anmelden nach dem Code.')}
+        catch(x){er.textContent=/invalid|code/i.test(x.message)?'Der Code stimmt nicht. Nimm den aktuellen Code.':x.message;sb.disabled=false}};
+      box.append(q,f)}catch(e){box.append(el('p','err',/mfa|factor|disabled|not enabled/i.test(e.message)?'2-Faktor ist im Supabase-Projekt ausgeschaltet: Supabase › Authentication › Multi-Factor › TOTP auf „Enabled“ stellen. ('+e.message+')':e.message))}b.disabled=false};
+  c.append(b,box);return c}
+function backupCard(){const c=el('div','card');c.append(el('h2',null,'Sicherung herunterladen'),el('p','sub','Lädt eine Datei (JSON) mit Profilen (ohne E-Mail), Clubs, Mitgliedern, Strecken, Rekorden, Challenges, offiziellen Beiträgen, Beiträgen (ohne Karten und Fotos) und Kommentaren. Gut einmal im Monat und vor großen Änderungen. Die Datei enthält Nutzerdaten – sicher aufbewahren und nicht weitergeben.'));
+  const info=el('p','sub');c.append(btnA('Sicherung herunterladen','primary',async()=>{info.className='sub';info.textContent='Wird erstellt …';try{const j=await rpc('admin_backup');const t=JSON.stringify(j,null,1);const bl=new Blob([t],{type:'application/json'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='linefact-sicherung-'+new Date().toISOString().slice(0,10)+'.json';document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
+      info.className='sub okline';info.textContent='Fertig ('+fmtB(bl.size)+'). Die Datei liegt in „Downloads“.'}catch(e){info.textContent=e.message}}),info);
+  c.append(el('p','sub','Die vollständige Sicherung macht Supabase im Gratis-Plan nicht automatisch. Fotos (Storage) sind nicht enthalten.'));return c}
+
 function linksSec(){const s=el('section');s.append(el('h3',null,'Schnellzugriff'));const c=el('div','card');const g=el('div','links');
   CFG.links.forEach(L=>{const d=el('div','lgrp');d.append(el('h4',null,L.g));L.items.forEach(([t,u,h])=>{const a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener';a.append(document.createTextNode(t),el('span',null,h+' ↗'));d.append(a)});g.append(d)});
   const d=el('div','lgrp');d.append(el('h4',null,'Kontakt'));const a=document.createElement('a');a.href='mailto:'+CFG.mail;a.append(document.createTextNode('Support-Postfach'),el('span',null,CFG.mail));d.append(a);g.append(d);c.append(g);s.append(c);return s}
