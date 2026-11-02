@@ -140,6 +140,12 @@ section.coll > h3.fold::after{transform:rotate(-90deg)}section.coll > :not(h3){d
 .detrow td{background:var(--card2,rgba(127,127,127,.06))}.detgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin:6px 0}.detgrid .mini{display:flex;flex-direction:column;padding:6px 8px;border:1px solid var(--line,#ddd);border-radius:10px}.detgrid .mini span{font-size:.75rem;opacity:.7}
 .offbox{margin-top:8px;padding:8px 10px;border-radius:10px;border:1px dashed var(--line,#ccc)}.memlist{list-style:none;padding:0;margin:4px 0}.memlist li{display:flex;gap:8px;align-items:center;padding:4px 0}
 .chkgrid{display:grid;gap:6px;margin:10px 0}.chkgrid label{display:flex;gap:8px;align-items:center;font-size:.92rem}.wordl{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.wtag{display:inline-flex;align-items:center;gap:4px;padding:2px 4px 2px 10px;border-radius:999px;border:1px solid var(--line,#ccc);font-size:.85rem}
+.tap{cursor:pointer;transition:transform .12s,box-shadow .12s}.tap:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(30,80,255,.15)}
+.brief{margin-bottom:14px;border-left:4px solid #1E50FF}.brief h2{margin:0 0 8px}.blist{margin:6px 0 0;padding-left:18px;line-height:1.7}.bwarn{background:#FFF4E5;border:1px solid #F5C77E;border-radius:12px;padding:10px 14px;margin:6px 0}.bwarn ul{margin:4px 0 0;padding-left:18px}.bok{color:#0B6B3A;font-weight:600;margin:4px 0}
+.csearch{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--ring);margin:6px 0 10px;background:var(--surface);color:inherit}
+.lov{position:fixed;inset:0;z-index:100;background:rgba(10,12,16,.45);display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px;overflow:auto}.lov[hidden]{display:none}
+.lbox{background:var(--surface);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:min(1000px,100%);padding:18px 18px 22px}.lhead{display:flex;justify-content:space-between;align-items:center;gap:10px}.lhead h2{margin:0}
+.lbox td{vertical-align:top;max-width:340px;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -237,10 +243,11 @@ function shell(){const a=$('#app');a.innerHTML='';const w=el('div','wrap');
 function render(){const m=$('#main');if(!m)return;m.innerHTML='';$('#stamp').textContent=ST.at?'Stand '+ST.at.toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}):'';
   if(ST.err){const c=el('div','card');c.append(el('p','err',ST.err));m.append(c);m.append(linksSec());return}
   const o=ST.o,D=ST.d,sum=k=>D.reduce((s,x)=>s+(x[k]||0),0);
+  m.append(briefCard());
   // Kopf: Nutzer + Aktivität
   const g=el('div','grid g-hero');
   const hero=el('div','card hero');hero.append(el('div','lbl','Nutzer mit Konto'),el('div','big',fmtN(o.users)));const dl=el('div','delta'+(o.users_7?'':' zero'),(o.users_7?'+'+fmtN(o.users_7):'±0')+' in 7 Tagen · +'+fmtN(o.users_30)+' in 30 Tagen');hero.append(dl);
-  g.append(hero,tile('Heute aktiv',o.dau,'Nutzer, die die App heute geöffnet haben'),tile('Aktiv in 7 Tagen',o.wau,'verschiedene Nutzer'),tile('Aktiv in 30 Tagen',o.mau,o.users?Math.round(o.mau/o.users*100)+' % aller Konten':''));m.append(g);
+  hero.classList.add('tap');hero.onclick=()=>goSec('Nutzer und Clubs');g.append(hero,tile('Heute aktiv',o.dau,'Nutzer, die die App heute geöffnet haben'),tile('Aktiv in 7 Tagen',o.wau,'verschiedene Nutzer'),tile('Aktiv in 30 Tagen',o.mau,o.users?Math.round(o.mau/o.users*100)+' % aller Konten':''));m.append(g);
   const g2=el('div','grid g3');g2.style.marginTop='14px';
   g2.append(tile('App-Starts (30 Tage)',o.opens_30,o.mau?'Ø '+(o.opens_30/o.mau).toFixed(1).replace('.',',')+' je aktivem Nutzer':''),tile('Ø aktive Tage je Nutzer',o.active_days_30,'in den letzten 30 Tagen',true),repTile(o.reports_open));m.append(g2);
   // Verläufe
@@ -251,7 +258,7 @@ function render(){const m=$('#main');if(!m)return;m.innerHTML='';$('#stamp').tex
   // Inhalte
   const s2=el('section');s2.append(el('h3',null,'Inhalte'));const ig=el('div','grid g6');
   [['Aktivitäten geteilt',o.activities,'+'+fmtN(o.activities_30)+' in 30 T.'],['Beiträge',o.posts],['Kommentare',o.comments],['Gefällt mir',o.likes],['Abos',o.follows],['Clubs',o.clubs,fmtN(o.club_members)+' Mitglieder'],
-   ['MX-Strecken',o.mx_tracks],['Race-Strecken',o.race_courses],['Rekorde',o.records],['Gekoppelte Uhren',o.devices],['Uhr-Fahrten wartend',o.device_rides,'noch nicht abgeholt'],['Pro-Abos (Apple)',o.pro_apple,(o.pro_yearly||0)+' jährlich · '+(o.pro_trial||0)+' im Gratismonat'],['Pro geschenkt',o.pro_gift],['Geräte mit Push',o.push_devices],['Push (24 h)',o.push_sent,'gesendet'],['Kommende Events',o.events],['Datenbank',o.schema,'SQL-Stand']].forEach(([l,v,h])=>{const c=el('div','card mini');c.append(el('div','val',typeof v==='number'?compact(v):String(v||'–')),el('div','lbl',l));if(h)c.append(el('div','lbl',h));ig.append(c)});
+   ['MX-Strecken',o.mx_tracks],['Race-Strecken',o.race_courses],['Rekorde',o.records],['Gekoppelte Uhren',o.devices],['Uhr-Fahrten wartend',o.device_rides,'noch nicht abgeholt'],['Pro-Abos (Apple)',o.pro_apple,(o.pro_yearly||0)+' jährlich · '+(o.pro_trial||0)+' im Gratismonat'],['Pro geschenkt',o.pro_gift],['Geräte mit Push',o.push_devices],['Push (24 h)',o.push_sent,'gesendet'],['Kommende Events',o.events],['Datenbank',o.schema,'SQL-Stand']].forEach(([l,v,h])=>{const c=el('div','card mini');const LK=LIST_OF[l];if(LK){c.classList.add('tap');c.tabIndex=0;c.setAttribute('role','button');c.title='Liste ansehen';c.onclick=()=>openList(LK,l);c.onkeydown=e=>{if(e.key==='Enter')openList(LK,l)}}else if(l==='Clubs'){c.classList.add('tap');c.onclick=()=>goSec('Nutzer und Clubs')}c.append(el('div','val',typeof v==='number'?compact(v):String(v||'–')),el('div','lbl',l));if(h)c.append(el('div','lbl',h));ig.append(c)});
   s2.append(ig);const g3=el('div','grid g3');g3.style.marginTop='14px';
   const MN={mx:'Motocross',enduro:'Enduro',race:'Enduro Race',post:'Beiträge'};
   g3.append(hbarCard('Geteilt nach Art','alle Zeit',Object.entries(o.modes||{}).map(([k,v])=>[MN[k]||k,v]).sort((a,b)=>b[1]-a[1])),
@@ -270,6 +277,44 @@ function foldSections(m){let C={};try{C=JSON.parse(localStorage.getItem('lfa_fol
   m.querySelectorAll(':scope > section').forEach(sec=>{const h=sec.querySelector(':scope > h3');if(!h)return;const k=h.textContent.replace(/\s*·.*$/,'').trim();h.classList.add('fold');h.tabIndex=0;h.setAttribute('role','button');
     const set=on=>{sec.classList.toggle('coll',on);h.setAttribute('aria-expanded',String(!on))};set(!!C[k]);
     const tg=()=>{const on=!sec.classList.contains('coll');set(on);C[k]=on;try{localStorage.setItem('lfa_fold',JSON.stringify(C))}catch(e){}};h.onclick=tg;h.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();tg()}}})}
+
+// ---------- 1.0.58: Briefing, Listen hinter den Kacheln ----------
+const LIST_OF={'Aktivitäten geteilt':'activities','Beiträge':'posts','Kommentare':'comments','Rekorde':'records','Kommende Events':'events','MX-Strecken':'tracks','Race-Strecken':'courses'};
+function goSec(t){const h=[...document.querySelectorAll('#main > section > h3')].find(x=>x.textContent.trim().startsWith(t));if(!h)return;const sec=h.parentElement;if(sec.classList.contains('coll'))h.click();h.scrollIntoView({behavior:'smooth',block:'start'})}
+function briefCard(){const o=ST.o||{},D=ST.d||[],c=el('div','card brief');c.append(el('h2',null,'Briefing'));const L=[],W=[];
+  const last=(k,a,b)=>D.slice(a,b).reduce((s,x)=>s+(x[k]||0),0);const n=D.length;const nu7=last('new_users',n-7,n),nu7p=last('new_users',n-14,n-7),ac7=last('activities',n-7,n),ac7p=last('activities',n-14,n-7),ak7=D.slice(-7).reduce((s,x)=>s+(x.active||0),0)/Math.max(1,Math.min(7,n));
+  const tr=(a,b)=>b?(a>=b?'▲ +'+Math.round((a-b)/b*100)+' %':'▼ −'+Math.round((b-a)/b*100)+' %'):(a?'neu':'±0');
+  L.push('<b>'+fmtN(o.users)+'</b> Konten · <b>+'+fmtN(nu7)+'</b> in 7 Tagen ('+tr(nu7,nu7p)+' zur Vorwoche)');
+  L.push('Aktiv: <b>'+fmtN(o.dau)+'</b> heute · <b>'+fmtN(o.wau)+'</b> in 7 Tagen · <b>'+fmtN(o.mau)+'</b> in 30 Tagen · Ø '+(Math.round(ak7*10)/10).toString().replace('.',',')+' pro Tag');
+  L.push('Geteilte Fahrten: <b>'+fmtN(ac7)+'</b> in 7 Tagen ('+tr(ac7,ac7p)+') · Beiträge gesamt '+fmtN(o.posts)+' · Kommentare '+fmtN(o.comments));
+  if(o.reports_open)W.push('<b>'+o.reports_open+' offene Meldung'+(o.reports_open===1?'':'en')+'</b> – bitte unter „Meldungen“ prüfen (DSA: rasch bearbeiten).');
+  const dbp=o.db_bytes?o.db_bytes/500e6*100:0,stp=o.storage_bytes?o.storage_bytes/1e9*100:0;(dbp>70?W:L).push('Speicher: Datenbank <b>'+Math.round(dbp)+' %</b>, Fotos <b>'+Math.round(stp)+' %</b> der Gratis-Grenze'+(dbp>70||stp>70?' – bald aufräumen oder Plan wechseln.':''));if(stp>70&&dbp<=70)W.push('Foto-Speicher über 70 %.');
+  if(Array.isArray(ST.map)){const ym=new Date().toISOString().slice(0,7);let mt=0;ST.map.forEach(x=>{if(String(x.day).slice(0,7)===ym)mt+=(+x.tiles||0)+(+x.statics||0)});L.push('Karten (Mapbox) diesen Monat: <b>'+fmtN(mt)+'</b> Abrufe');}
+  const V=o.versions||[];if(V.length){const tot=V.reduce((s,x)=>s+x.users,0),top=V.slice().sort((a,b)=>String(b.version).localeCompare(String(a.version),undefined,{numeric:true}))[0];L.push('Neueste App-Version '+top.version+': <b>'+Math.round(top.users/Math.max(1,tot)*100)+' %</b> der aktiven Nutzer');}
+  L.push('Push: '+fmtN(o.push_devices)+' Geräte · '+fmtN(o.push_sent)+' Mitteilungen in 24 h · Uhren: '+fmtN(o.devices)+' gekoppelt');
+  if(o.schema&&o.schema!=='1.0.58')W.push('Datenbank-Stand '+o.schema+' – die neue SQL-Datei 1.0.58 ist noch nicht eingespielt.');
+  if(W.length){const w=el('div','bwarn');w.innerHTML='<b>Zu tun</b><ul>'+W.map(x=>'<li>'+x+'</li>').join('')+'</ul>';c.append(w)}else c.append(el('p','bok','✓ Alles in Ordnung – nichts Dringendes.'));
+  const ul=el('ul','blist');ul.innerHTML=L.map(x=>'<li>'+x+'</li>').join('');c.append(ul);return c}
+const LCOL={activities:[['at','Datum','d'],['name','Fahrt'],['mode','Art'],['username','Von','@'],['club','Club'],['likes','♥','n'],['comments','💬','n']],
+  posts:[['at','Datum','d'],['text','Beitrag'],['username','Von','@'],['club','Club / Seite'],['ad','Anzeige','b'],['likes','♥','n'],['comments','💬','n']],
+  comments:[['at','Datum','d'],['text','Kommentar'],['username','Von','@'],['on_name','Unter']],
+  records:[['track','Strecke'],['club','Club'],['username','Fahrer','@'],['best_ms','Zeit','ms'],['at','Datum','d'],['hidden','Ausgeblendet','b']],
+  events:[['at','Termin','dt'],['title','Event'],['place','Ort'],['club','Club / Seite'],['username','Von','@']],
+  tracks:[['name','Strecke'],['region','Ort'],['club','Club'],['published','Veröffentlicht','b'],['records','Rekorde','n'],['at','Angelegt','d']],
+  courses:[['name','Strecke'],['region','Ort'],['club','Club'],['cps','Checkpoints','n']]};
+const MODEN={mx:'Motocross',enduro:'Enduro',race:'Enduro Race'};
+function lcell(v,t){if(v==null||v==='')return '–';if(t==='d')return new Date(v).toLocaleDateString('de-AT');if(t==='dt')return new Date(v).toLocaleString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  if(t==='ms'){const x=+v/1000,m=Math.floor(x/60);return m+':'+(x-m*60).toFixed(2).padStart(5,'0').replace('.',',')}if(t==='b')return v?'ja':'–';if(t==='@')return '@'+v;if(t==='n')return fmtN(+v);return MODEN[v]||String(v)}
+async function openList(kind,title){let ov=document.getElementById('lov');if(!ov){ov=el('div','lov');ov.id='lov';document.body.append(ov)}ov.innerHTML='';ov.hidden=false;
+  const box=el('div','lbox');const hd=el('div','lhead');const x=el('button','tbtn','✕ Schließen');x.type='button';x.onclick=()=>{ov.hidden=true};hd.append(el('h2',null,title),x);
+  const q=el('input','csearch');q.type='search';q.placeholder='Suchen (Name, Text, Benutzer) …';const note=el('p','sub','Lade …');const w=el('div','tscroll');box.append(hd,q,note,w);ov.append(box);ov.onclick=e=>{if(e.target===ov)ov.hidden=true};
+  const load=async()=>{note.textContent='Lade …';try{const rows=(await rpc('admin_list',{p_kind:kind,p_query:q.value.trim(),p_limit:200}))||[];const C=LCOL[kind];const t=el('table');t.innerHTML='<thead><tr>'+C.map(c=>'<th>'+c[1]+'</th>').join('')+'</tr></thead>';const bd=el('tbody');
+      rows.forEach(r=>{const tr=el('tr');C.forEach(c=>{const td=el('td',c[2]==='n'?'n':null,lcell(r[c[0]],c[2]));tr.append(td)});bd.append(tr)});t.append(bd);w.innerHTML='';w.append(t);
+      note.textContent=rows.length?(rows.length+' Einträge'+(rows.length>=200?' (die neuesten 200)':'')+(kind==='activities'?' · Spuren/Karten werden hier nicht gezeigt.':'')):'Keine Einträge.'}
+    catch(e){note.textContent=e.code==='PGRST202'?'Die Datenbank ist nicht aktuell: Bitte die neue SQL-Datei 1.0.58 ausführen.':e.message}};
+  let tq=null;q.oninput=()=>{clearTimeout(tq);tq=setTimeout(load,350)};load();setTimeout(()=>q.focus(),50)}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const o=document.getElementById('lov');if(o)o.hidden=true}});
+
 function tile(l,v,h,raw){const c=el('div','card tile');c.append(el('div','lbl',l),el('div','val',raw?String(v).replace('.',','):fmtN(v)));if(h)c.append(el('div','hint',h));return c}
 function repTile(n){const c=el('div','card tile'+(n?' alert':''));c.append(el('div','lbl','Offene Meldungen'));const v=el('div','val',fmtN(n));c.append(v);
   const b=el('span','badge '+(n?'crit':'good'),n?'⚠ bitte prüfen (in der Regel binnen 24 h)':'✓ alles erledigt');c.append(b);if(n){c.style.cursor='pointer';c.onclick=()=>document.getElementById('reports').scrollIntoView({behavior:'smooth'})}return c}
@@ -408,8 +453,9 @@ function newUserCard(){const c=el('div','card');c.append(el('h2',null,'Nutzer hi
   const row=el('div');row.style.cssText='display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap';row.append(go,info);c.append(g,row);return c}
 function clubsCard(){const c=el('div','card');c.append(el('h2',null,'Clubs'),el('p','sub','„Offiziell“ zeigt in der App ein blaues Abzeichen beim Club (z. B. echter Verein, geprüft).'));if(!ST.clubs.length){c.append(el('p','empty','Noch keine Clubs.'));return c}
   if(ST.clubMsg){const m=el('p','clubmsg',ST.clubMsg);m.setAttribute('role','status');c.append(m)}
+  {const sq=el('input','csearch');sq.type='search';sq.placeholder='Club oder Seite suchen …';sq.value=ST.clubQ||'';sq.oninput=()=>{ST.clubQ=sq.value;const v=sq.value.trim().toLowerCase();c.querySelectorAll('tbody tr').forEach(r=>{const n=(r.dataset.n||'');r.hidden=!!v&&!n.includes(v)})};c.append(sq)}
   const w=el('div','tscroll'),t=el('table');t.innerHTML='<thead><tr><th>Club · Offiziell-Siegel</th><th class="n">Mitgl.</th><th class="n">Beitr.</th><th class="n">Strecken</th></tr></thead>';const bd=el('tbody');
-  ST.clubs.forEach(g=>{const r=el('tr');const nm=el('td','clubnm');nm.append(el('b',null,g.name));const st=el('div','clubst');
+  ST.clubs.forEach(g=>{const r=el('tr');r.dataset.n=String(g.name||'').toLowerCase();{const v=(ST.clubQ||'').trim().toLowerCase();r.hidden=!!v&&!r.dataset.n.includes(v)}const nm=el('td','clubnm');nm.append(el('b',null,g.name));const st=el('div','clubst');
     if(g.official){st.append(el('span','badge good','✓ Offiziell'));const rm=el('button','tbtn danger','Siegel entfernen');rm.type='button';rm.setAttribute('aria-label','Offiziell-Siegel entfernen: '+g.name);
       rm.onclick=()=>setOfficial(g,false,rm);st.append(rm)}
     else{st.append(el('span','badge','nicht offiziell'));const on=el('button','tbtn','Offiziell machen');on.type='button';on.setAttribute('aria-label','Offiziell machen: '+g.name);on.onclick=()=>setOfficial(g,true,on);st.append(on)}
