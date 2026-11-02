@@ -146,6 +146,11 @@ section.coll > h3.fold::after{transform:rotate(-90deg)}section.coll > :not(h3){d
 .lov{position:fixed;inset:0;z-index:100;background:rgba(10,12,16,.45);display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px;overflow:auto}.lov[hidden]{display:none}
 .lbox{background:var(--surface);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:min(1000px,100%);padding:18px 18px 22px}.lhead{display:flex;justify-content:space-between;align-items:center;gap:10px}.lhead h2{margin:0}
 .lbox td{vertical-align:top;max-width:340px;overflow-wrap:anywhere}
+
+.prores{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.prolist{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.prorow{border:1px solid var(--line,#E2E4E0);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}.prorow.off{opacity:.6}
+.prohd{display:flex;flex-direction:column;gap:2px}.prochips{display:flex;flex-wrap:wrap;gap:6px}.pchip{border:1px solid var(--line,#E2E4E0);background:transparent;border-radius:99px;padding:5px 10px;font:inherit;font-size:.85rem;cursor:pointer;color:inherit}.pchip.on{background:#1E50FF;border-color:#1E50FF;color:#fff}
+.progrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.progrid label{display:flex;flex-direction:column;gap:4px}.lbl2{font-size:.78rem;font-weight:700;color:var(--muted,#6B7178)}.proft{display:flex;justify-content:space-between;align-items:center}.prochk{display:flex;align-items:center;gap:6px;font-weight:700}
 </style>
 </head>
 <body>
@@ -265,7 +270,7 @@ function render(){const m=$('#main');if(!m)return;m.innerHTML='';$('#stamp').tex
     hbarCard('App-Versionen','Nutzer je Version, letzte 30 Tage',(o.versions||[]).map(x=>[x.version,x.users])),storageCard(o));s2.append(g3);m.append(s2);
   m.append(mapSec());
   // Meldungen
-  m.append(annSec());m.append(welSec());m.append(chalSec());
+  m.append(annSec());m.append(promoSec());m.append(welSec());m.append(chalSec());
   m.append(reportsSec());
   // Nutzer + Clubs
   const s4=el('section');s4.append(el('h3',null,'Nutzer und Clubs'));const ug=el('div','grid');ug.style.gridTemplateColumns='minmax(0,2fr) minmax(0,1fr)';if(innerWidth<900)ug.style.gridTemplateColumns='1fr';ug.append(usersCard(),clubsCard(),newUserCard(),aboCard());s4.append(ug);m.append(s4);{const s5=el('section');s5.append(el('h3',null,'Moderation'),modCard());m.append(s5)}
@@ -479,6 +484,30 @@ function annImage(file){return new Promise((res,rej)=>{const u=URL.createObjectU
   im.onload=()=>{URL.revokeObjectURL(u);let w=im.naturalWidth,h=im.naturalHeight;const k=Math.min(1,1200/w,1600/h);w=Math.round(w*k);h=Math.round(h*k);const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(im,0,0,w,h);
     for(const q of [.85,.75,.65,.55,.45]){const d=c.toDataURL('image/jpeg',q);if(d.length<=850000){res(d);return}}rej(new Error('Das Bild ist zu groß.'))};im.src=u})}
 const ANN={img:null};
+
+// ---------- Empfohlene Seiten (gesponserte Beiträge) ----------
+const REGIONS=[['AT','Österreich'],['DE','Deutschland'],['CH','Schweiz'],['IT','Italien'],['SI','Slowenien'],['HU','Ungarn'],['CZ','Tschechien'],['SK','Slowakei'],['LI','Liechtenstein']];
+function promoSec(){const s=el('section');s.append(el('h3',null,'Empfohlene Seiten (gesponsert)'));const c=el('div','card');s.append(c);
+  c.append(el('p','sub','Der neueste Beitrag (höchstens 30 Tage alt) dieser Seiten erscheint im Feed „Alle“ bei Leuten, die der Seite noch nicht folgen – mit „Gesponsert“ gekennzeichnet und direktem „Abonnieren“. Die App entscheidet auf dem iPhone anhand der Region-Einstellung und zeigt jede Empfehlung höchstens im gewählten Abstand. Es werden keine Aufrufe gezählt oder an den Server gemeldet.'));
+  const add=el('div','prowadd');const q=el('input');q.type='search';q.placeholder='Seite suchen, z. B. Motorrad Huber';q.className='anin';const res=el('div','prores');add.append(q,res);c.append(add);
+  const list=el('div','prolist');c.append(list);
+  let tm=null;q.oninput=()=>{clearTimeout(tm);tm=setTimeout(async()=>{res.innerHTML='';const v=q.value.trim();if(v.length<2)return;try{const L=await rpc('admin_find_pages',{p_query:v});if(!L.length){res.append(el('p','sub','Keine Seite gefunden. Empfehlen kann man nur Seiten (Marke · Medien), keine Fahrer-Clubs.'));return}
+    L.forEach(p=>{const b=el('button','tbtn prpick');b.type='button';b.textContent=p.name+' · '+p.subs+' Abonnenten';b.onclick=async()=>{try{await rpc('admin_set_promotion',{p_group:p.id,p_regions:['AT'],p_freq:7,p_active:true,p_ends:null,p_note:null});q.value='';res.innerHTML='';load()}catch(e){alert(e.message||e)}};res.append(b)})}catch(e){res.append(el('p','err',e.message||String(e)))}},250)};
+  async function load(){list.innerHTML='';list.append(el('p','sub','Lade …'));let L=[];try{L=await rpc('admin_promotions',{})}catch(e){list.innerHTML='';list.append(el('p','err',(e.message||String(e))+' – ist der Supabase-Nachtrag 1.0.58 eingespielt?'));return}
+    list.innerHTML='';if(!L.length){list.append(el('p','sub','Noch keine empfohlenen Seiten. Oben eine Seite suchen und antippen.'));return}
+    L.forEach(p=>{const row=el('div','prorow'+(p.active?'':' off'));const hd=el('div','prohd');hd.append(el('b',null,p.name),el('span','sub',p.subs+' Abonnenten · neuester Beitrag: '+(p.last_post?new Date(p.last_post).toLocaleDateString('de-AT'):'keiner')+(p.last_post&&Date.now()-Date.parse(p.last_post)>30*864e5?' (älter als 30 Tage – wird nicht gezeigt)':'')));row.append(hd);
+      const regs=new Set(p.regions||[]);const rg=el('div','prochips');const all=el('button','pchip'+(regs.size?'':' on'),'Alle Regionen');all.type='button';all.onclick=()=>{regs.clear();save()};rg.append(all);
+      REGIONS.forEach(([k,n])=>{const b=el('button','pchip'+(regs.has(k)?' on':''),n);b.type='button';b.onclick=()=>{regs.has(k)?regs.delete(k):regs.add(k);save()};rg.append(b)});row.append(el('div','lbl2','Regionen'),rg);
+      const f=document.createElement('select');[[1,'höchstens 1× am Tag'],[3,'höchstens 1× in 3 Tagen'],[7,'höchstens 1× pro Woche'],[14,'höchstens 1× in 2 Wochen'],[30,'höchstens 1× im Monat']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;if(+p.freq_days===v)o.selected=true;f.append(o)});f.onchange=()=>save();
+      const en=el('input');en.type='date';en.value=p.ends_at?String(p.ends_at).slice(0,10):'';en.onchange=()=>save();
+      const nt=el('input');nt.type='text';nt.maxLength=200;nt.placeholder='Notiz (z. B. Rechnung 2026-01, bezahlt bis …)';nt.value=p.note||'';nt.className='anin';nt.onchange=()=>save();
+      const act=el('label','prochk');const cb=el('input');cb.type='checkbox';cb.checked=!!p.active;cb.onchange=()=>save();act.append(cb,el('span',null,'Aktiv'));
+      const g=el('div','progrid');const l1=el('label');l1.append(el('span','lbl2','Häufigkeit je Person'),f);const l2=el('label');l2.append(el('span','lbl2','Endet am (leer = unbegrenzt)'),en);g.append(l1,l2);row.append(g,nt);
+      const del=el('button','tbtn','Entfernen');del.type='button';del.onclick=async()=>{if(!del.dataset.arm){del.dataset.arm=1;del.textContent='Wirklich entfernen?';setTimeout(()=>{del.dataset.arm='';del.textContent='Entfernen'},3000);return}try{await rpc('admin_delete_promotion',{p_id:p.id});load()}catch(e){alert(e.message||e)}};
+      const ft=el('div','proft');ft.append(act,del);row.append(ft);list.append(row);
+      async function save(){try{await rpc('admin_set_promotion',{p_group:p.group_id,p_regions:[...regs],p_freq:+f.value,p_active:cb.checked,p_ends:en.value?new Date(en.value+'T23:59:59').toISOString():null,p_note:nt.value.trim()||null});load()}catch(e){alert(e.message||e)}}})}
+  load();return s}
+
 function annSec(){const s=el('section');s.append(el('h3',null,'Offizielle Beiträge'));const c=el('div','card');
   c.append(el('p','sub','Erscheinen bei allen angemeldeten Nutzern als blauer Banner unter Aktivität › Alle (die ersten 7 Tage oben angeheftet). Jeder kann einen Beitrag mit ✕ für sich ausblenden.'));
   const lab=(t,inp)=>{const l=el('label','annl');l.append(el('span',null,t),inp);return l};
