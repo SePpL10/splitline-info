@@ -21,7 +21,7 @@ h1{font-size:clamp(2.1rem,6vw,3.6rem);line-height:1.04;letter-spacing:-.03em;mar
 .lead{font-size:1.15rem;color:var(--mut);margin:0 0 24px;max-width:30em}
 .cta{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 22px;border-radius:14px;background:var(--ink);color:#fff!important;font-weight:700;text-decoration:none}
-.btn2{display:inline-flex;padding:13px 18px;border-radius:14px;border:1.5px solid var(--line);background:#fff;color:var(--ink)!important;font-weight:600;text-decoration:none}
+.badge{display:inline-flex;line-height:0}.badge img{height:48px;width:auto;display:block}.btn2{display:inline-flex;padding:13px 18px;border-radius:14px;border:1.5px solid var(--line);background:#fff;color:var(--ink)!important;font-weight:600;text-decoration:none}
 .free{margin:14px 0 0;font-size:.92rem;color:var(--mut)}
 .phones{display:flex;gap:12px;justify-content:center}
 .phones picture{display:contents}.phones img{width:31%;max-width:190px;border-radius:22px;border:6px solid #121418;box-shadow:0 18px 40px rgba(18,20,24,.18);background:#fff}
@@ -59,7 +59,7 @@ footer{color:var(--mut);font-size:.85rem;padding:24px 0 40px;border-top:1px soli
   <p class="lead" data-l="de">GPS-Rundenzeiten für Motocross, Enduro-Touren, Clubs und Rennen – mit den Leuten, mit denen du fährst.</p>
   <p class="lead" data-l="en">GPS lap times for motocross, enduro rides, clubs and races – with the people you ride with.</p>
   <div class="cta">
-   <a class="btn" id="dlBtn" href="https://apps.apple.com/app/id6823320932"><span data-l="de">Im App Store laden</span><span data-l="en">Download on the App Store</span></a>
+   <a class="badge" id="dlBtn" data-l="de" href="https://apps.apple.com/app/id6823320932" aria-label="Laden im App Store"><picture><source media="(prefers-color-scheme: dark)" srcset="appstore-de-weiss.svg"><img src="appstore-de-schwarz.svg" alt="Laden im App Store" width="144" height="48"></picture></a><a class="btn" id="dlBtnEn" data-l="en" href="https://apps.apple.com/app/id6823320932">Free on the App Store</a>
    <a class="btn2" id="watchBtn" href="https://apps.apple.com/app/id6824172560">Apple Watch</a>
   </div>
   <p class="free" data-l="de">Kostenlos · ohne Abo · für iPhone, Apple Watch und Garmin</p>
