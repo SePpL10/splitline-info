@@ -252,7 +252,8 @@ function render(){const m=$('#main');if(!m)return;m.innerHTML='';$('#stamp').tex
   // Kopf: Nutzer + Aktivität
   const g=el('div','grid g-hero');
   const hero=el('div','card hero');hero.append(el('div','lbl','Nutzer mit Konto'),el('div','big',fmtN(o.users)));const dl=el('div','delta'+(o.users_7?'':' zero'),(o.users_7?'+'+fmtN(o.users_7):'±0')+' in 7 Tagen · +'+fmtN(o.users_30)+' in 30 Tagen');hero.append(dl);
-  hero.classList.add('tap');hero.onclick=()=>goSec('Nutzer und Clubs');g.append(hero,tile('Heute aktiv',o.dau,'Nutzer, die die App heute geöffnet haben'),tile('Aktiv in 7 Tagen',o.wau,'verschiedene Nutzer'),tile('Aktiv in 30 Tagen',o.mau,o.users?Math.round(o.mau/o.users*100)+' % aller Konten':''));m.append(g);
+  hero.classList.add('tap');hero.onclick=()=>goSec('Nutzer und Clubs');const tA=(t,v,h,k)=>{const c=tile(t,v,h);c.classList.add('tap');c.title='Antippen: Liste der Nutzer';c.setAttribute('role','button');c.tabIndex=0;c.onclick=()=>openList(k,t);c.onkeydown=e=>{if(e.key==='Enter')openList(k,t)};return c};
+  g.append(hero,tA('Heute aktiv',o.dau,'Nutzer, die die App heute geöffnet haben','act1'),tA('Aktiv in 7 Tagen',o.wau,'verschiedene Nutzer','act7'),tA('Aktiv in 30 Tagen',o.mau,o.users?Math.round(o.mau/o.users*100)+' % aller Konten':'','act30'));m.append(g);
   const g2=el('div','grid g3');g2.style.marginTop='14px';
   g2.append(tile('App-Starts (30 Tage)',o.opens_30,o.mau?'Ø '+(o.opens_30/o.mau).toFixed(1).replace('.',',')+' je aktivem Nutzer':''),tile('Ø aktive Tage je Nutzer',o.active_days_30,'in den letzten 30 Tagen',true),repTile(o.reports_open));m.append(g2);
   // Verläufe
@@ -300,23 +301,24 @@ function briefCard(){const o=ST.o||{},D=ST.d||[],c=el('div','card brief');c.appe
   if(o.schema&&o.schema!=='1.0.58')W.push('Datenbank-Stand '+o.schema+' – die neue SQL-Datei 1.0.58 ist noch nicht eingespielt.');
   if(W.length){const w=el('div','bwarn');w.innerHTML='<b>Zu tun</b><ul>'+W.map(x=>'<li>'+x+'</li>').join('')+'</ul>';c.append(w)}else c.append(el('p','bok','✓ Alles in Ordnung – nichts Dringendes.'));
   const ul=el('ul','blist');ul.innerHTML=L.map(x=>'<li>'+x+'</li>').join('');c.append(ul);return c}
-const LCOL={activities:[['at','Datum','d'],['name','Fahrt'],['mode','Art'],['username','Von','@'],['club','Club'],['likes','♥','n'],['comments','💬','n']],
+const ACOL=[['username','Benutzer','@'],['name','Name'],['last_day','Zuletzt','d'],['days','Tage','n'],['opens','App-Starts','n'],['version','Version'],['platform','Gerät']];
+const LCOL={act1:ACOL,act7:ACOL,act30:ACOL,activities:[['at','Datum','d'],['name','Fahrt'],['mode','Art'],['username','Von','@'],['club','Club'],['likes','♥','n'],['comments','💬','n']],
   posts:[['at','Datum','d'],['text','Beitrag'],['username','Von','@'],['club','Club / Seite'],['ad','Anzeige','b'],['likes','♥','n'],['comments','💬','n']],
   comments:[['at','Datum','d'],['text','Kommentar'],['username','Von','@'],['on_name','Unter']],
   records:[['track','Strecke'],['club','Club'],['username','Fahrer','@'],['best_ms','Zeit','ms'],['at','Datum','d'],['hidden','Ausgeblendet','b']],
   events:[['at','Termin','dt'],['title','Event'],['place','Ort'],['club','Club / Seite'],['username','Von','@']],
   tracks:[['name','Strecke'],['region','Ort'],['club','Club'],['published','Veröffentlicht','b'],['records','Rekorde','n'],['at','Angelegt','d']],
   courses:[['name','Strecke'],['region','Ort'],['club','Club'],['cps','Checkpoints','n']]};
-const MODEN={mx:'Motocross',enduro:'Enduro',race:'Enduro Race'};
+const MODEN={mx:'Motocross',enduro:'Enduro',race:'Enduro Race',ios:'iPhone',web:'Web',watch:'Uhr'};
 function lcell(v,t){if(v==null||v==='')return '–';if(t==='d')return new Date(v).toLocaleDateString('de-AT');if(t==='dt')return new Date(v).toLocaleString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
   if(t==='ms'){const x=+v/1000,m=Math.floor(x/60);return m+':'+(x-m*60).toFixed(2).padStart(5,'0').replace('.',',')}if(t==='b')return v?'ja':'–';if(t==='@')return '@'+v;if(t==='n')return fmtN(+v);return MODEN[v]||String(v)}
 async function openList(kind,title){let ov=document.getElementById('lov');if(!ov){ov=el('div','lov');ov.id='lov';document.body.append(ov)}ov.innerHTML='';ov.hidden=false;
   const box=el('div','lbox');const hd=el('div','lhead');const x=el('button','tbtn','✕ Schließen');x.type='button';x.onclick=()=>{ov.hidden=true};hd.append(el('h2',null,title),x);
   const q=el('input','csearch');q.type='search';q.placeholder='Suchen (Name, Text, Benutzer) …';const note=el('p','sub','Lade …');const w=el('div','tscroll');box.append(hd,q,note,w);ov.append(box);ov.onclick=e=>{if(e.target===ov)ov.hidden=true};
-  const load=async()=>{note.textContent='Lade …';try{const rows=(await rpc('admin_list',{p_kind:kind,p_query:q.value.trim(),p_limit:200}))||[];const C=LCOL[kind];const t=el('table');t.innerHTML='<thead><tr>'+C.map(c=>'<th>'+c[1]+'</th>').join('')+'</tr></thead>';const bd=el('tbody');
+  const load=async()=>{note.textContent='Lade …';try{const ad={act1:1,act7:7,act30:30}[kind];const rows=(ad?await rpc('admin_active_users',{p_days:ad,p_query:q.value.trim()}):await rpc('admin_list',{p_kind:kind,p_query:q.value.trim(),p_limit:200}))||[];const C=LCOL[kind];const t=el('table');t.innerHTML='<thead><tr>'+C.map(c=>'<th>'+c[1]+'</th>').join('')+'</tr></thead>';const bd=el('tbody');
       rows.forEach(r=>{const tr=el('tr');C.forEach(c=>{const td=el('td',c[2]==='n'?'n':null,lcell(r[c[0]],c[2]));tr.append(td)});bd.append(tr)});t.append(bd);w.innerHTML='';w.append(t);
-      note.textContent=rows.length?(rows.length+' Einträge'+(rows.length>=200?' (die neuesten 200)':'')+(kind==='activities'?' · Spuren/Karten werden hier nicht gezeigt.':'')):'Keine Einträge.'}
-    catch(e){note.textContent=e.code==='PGRST202'?'Die Datenbank ist nicht aktuell: Bitte die neue SQL-Datei 1.0.58 ausführen.':e.message}};
+      note.textContent=rows.length?(rows.length+(ad?' Nutzer · nur App-Starts, keine Fahrten oder Orte':' Einträge'+(rows.length>=200?' (die neuesten 200)':''))+(kind==='activities'?' · Spuren/Karten werden hier nicht gezeigt.':'')):'Keine Einträge.'}
+    catch(e){note.textContent=e.code==='PGRST202'?(ad?'Die Datenbank ist nicht aktuell: Bitte sql-admin-aktive-nutzer.sql in Supabase ausführen.':'Die Datenbank ist nicht aktuell: Bitte die neue SQL-Datei 1.0.58 ausführen.'):e.message}};
   let tq=null;q.oninput=()=>{clearTimeout(tq);tq=setTimeout(load,350)};load();setTimeout(()=>q.focus(),50)}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){const o=document.getElementById('lov');if(o)o.hidden=true}});
 
