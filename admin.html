@@ -39,6 +39,7 @@ header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom
 .seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
 .seg button{border:0;border-radius:999px;min-height:30px;padding:4px 14px;background:transparent;color:var(--ink-2)}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface);font-weight:600}
+.seg{flex-wrap:wrap;max-width:100%;border-radius:18px}.seg button{white-space:nowrap}@media (max-width:640px){.seg button{padding:4px 10px}}
 .grid{display:grid;gap:14px}
 .g-hero{grid-template-columns:minmax(260px,1.2fr) repeat(3,minmax(0,1fr))}
 .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -178,10 +179,15 @@ const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt
 const NF=new Intl.NumberFormat('de-AT');const fmtN=n=>n==null?'–':NF.format(n);
 const compact=n=>n>=1e6?(n/1e6).toFixed(1).replace('.',',')+' Mio.':n>=1e4?Math.round(n/1e3)+' Tsd.':NF.format(n);
 const fmtB=b=>b==null?'–':b>=1e9?(b/1e9).toFixed(2).replace('.',',')+' GB':b>=1e6?(b/1e6).toFixed(1).replace('.',',')+' MB':Math.round(b/1e3)+' kB';
-const dShort=d=>{const x=new Date(d+'T12:00:00');return x.toLocaleDateString('de-AT',{day:'numeric',month:'numeric'})};
+const dShort=(d,G)=>{const x=new Date(d+'T12:00:00');return G==='m'?x.toLocaleDateString('de-AT',{month:'short',year:'2-digit'}):x.toLocaleDateString('de-AT',{day:'numeric',month:'numeric'})};
+const RNG=[[7,'7 Tage'],[30,'30 Tage'],[90,'90 Tage'],[182,'6 Monate'],[365,'1 Jahr'],[0,'Gesamt']],rngT=n=>(RNG.find(x=>x[0]===n)||[0,n+' Tage'])[1];
+function gOf(n){return ST.gran!=='auto'?ST.gran:n<=92?'d':n<=400?'w':'m'}
+function aggD(D){const g=gOf(D.length);ST.g=g;if(g==='d')return D;const B=[],by={};D.forEach(x=>{const t=new Date(x.day+'T12:00:00');let k;if(g==='w'){t.setDate(t.getDate()-((t.getDay()+6)%7));k=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0')}else k=String(x.day).slice(0,7)+'-01';
+  let b=by[k];if(!b){b=by[k]={day:k,_n:0,_a:0};B.push(b)}b._n++;b._a+=x.active||0;for(const f of ['opens','new_users','activities','posts','comments','deleted'])b[f]=(b[f]||0)+(x[f]||0)});B.forEach(b=>b.active=Math.round(b._a/b._n*10)/10);return B}
+const perT=()=>({d:'pro Tag',w:'pro Woche',m:'pro Monat'})[ST.g||'d'];
 const dLong=d=>d?new Date(d).toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric'}):'–';
 const ss={get(k){try{return JSON.parse(sessionStorage.getItem(k))}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
-let SES=ss.get('lfa_ses'),ST={days:30,data:null,users:[],q:'',reports:[],clubs:[],allRep:false};
+let SES=ss.get('lfa_ses'),ST={days:30,gran:'auto',data:null,users:[],q:'',reports:[],clubs:[],allRep:false};
 
 // ---------- Supabase ----------
 async function req(path,body,tok){const h={apikey:CFG.sbKey,'Content-Type':'application/json'};if(tok)h.Authorization='Bearer '+tok;
@@ -231,6 +237,7 @@ function showMfa(msg){const a=$('#app');a.innerHTML='';const w=el('div','login')
     catch(x){f.querySelector('#le').textContent=/invalid|code/i.test(x.message)?'Der Code stimmt nicht (oder ist abgelaufen). Nimm den aktuellen Code.':x.message;b.disabled=false;inp.select()}}}
 async function loadAll(){const m=$('#main');if(m)m.classList.add('loading');
   try{const[o,d,u,r,c,an,ch,ab,mu,se]=await Promise.all([rpc('admin_overview'),rpc('admin_daily',{p_days:ST.days}),rpc('admin_users',{p_query:ST.q,p_limit:200}),rpc('admin_reports',{p_all:ST.allRep}),rpc('admin_clubs'),rpc('get_announcements',{p_limit:20}).catch(()=>[]),rpc('admin_challenges').catch(()=>null),rpc('admin_abo_state').catch(()=>null),rpc('admin_map_usage',{p_days:62}).catch(()=>null),rpc('admin_settings').catch(()=>null)]);
+    try{ST.del=await rpc('admin_deletions')}catch(e){ST.del=null}
     try{ST.offu=new Set(((await rpc('official_users'))||[]).map(x=>x.id))}catch(e){ST.offu=new Set()}
     ST.o=o;ST.d=d||[];ST.users=u||[];ST.reports=r||[];ST.clubs=c||[];ST.ann=an||[];ST.chal=ch;ST.abo=ab;ST.map=mu;ST.set=se;ST.err='';ST.at=new Date()}
   catch(e){ST.err=e.code==='PGRST202'?'Die Datenbank ist nicht aktuell: Bitte die neue SQL-Datei in Supabase ausführen.':e.message}
@@ -243,23 +250,26 @@ function shell(){const a=$('#app');a.innerHTML='';const w=el('div','wrap');
   th.onclick=()=>{const r=document.documentElement,cur=r.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');r.dataset.theme=cur==='dark'?'light':'dark';try{localStorage.setItem('lfa_theme',r.dataset.theme)}catch(e){};render()};
   const lo=el('button',null,'Abmelden');lo.onclick=logout;const qa=el('button',null,'Schnellzugriff');qa.onclick=()=>{const x=document.getElementById('quick');if(x){x.classList.remove('coll');x.scrollIntoView({behavior:'smooth'})}};h.append(logo(),b,el('span','sp'),st,rf,qa,th,lo);
   const f=el('div','filters');f.append(el('span','stamp','Zeitraum'));const sg=el('div','seg');sg.setAttribute('role','group');sg.setAttribute('aria-label','Zeitraum');
-  [[7,'7 Tage'],[30,'30 Tage'],[90,'90 Tage'],[365,'1 Jahr']].forEach(([n,t])=>{const x=el('button',null,t);x.type='button';x.setAttribute('aria-pressed',String(ST.days===n));x.onclick=()=>{ST.days=n;sg.querySelectorAll('button').forEach(y=>y.setAttribute('aria-pressed',String(y===x)));loadAll()};sg.append(x)});f.append(sg);
+  RNG.forEach(([n,t])=>{const x=el('button',null,t);x.type='button';x.setAttribute('aria-pressed',String(ST.days===n));x.onclick=()=>{ST.days=n;sg.querySelectorAll('button').forEach(y=>y.setAttribute('aria-pressed',String(y===x)));loadAll()};sg.append(x)});f.append(sg);
+  const sg2=el('div','seg');sg2.setAttribute('role','group');sg2.setAttribute('aria-label','Einteilung');[['auto','Automatisch'],['d','Tage'],['w','Wochen'],['m','Monate']].forEach(([k,t])=>{const x=el('button',null,t);x.type='button';x.setAttribute('aria-pressed',String(ST.gran===k));x.onclick=()=>{ST.gran=k;sg2.querySelectorAll('button').forEach(y=>y.setAttribute('aria-pressed',String(y===x)));render()};sg2.append(x)});f.append(el('span','stamp','Einteilung'),sg2);
   const m=el('main');m.id='main';w.append(h,f,m);a.append(w)}
 function render(){const m=$('#main');if(!m)return;m.innerHTML='';$('#stamp').textContent=ST.at?'Stand '+ST.at.toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}):'';
   if(ST.err){const c=el('div','card');c.append(el('p','err',ST.err));m.append(c);m.append(linksSec());return}
-  const o=ST.o,D=ST.d,sum=k=>D.reduce((s,x)=>s+(x[k]||0),0);
+  const o=ST.o,D0=ST.d,sum=k=>D0.reduce((s,x)=>s+(x[k]||0),0),D=aggD(D0),pt=perT(),dl0=ST.del;
   m.append(briefCard());
   // Kopf: Nutzer + Aktivität
   const g=el('div','grid g-hero');
-  const hero=el('div','card hero');hero.append(el('div','lbl','Nutzer mit Konto'),el('div','big',fmtN(o.users)));const dl=el('div','delta'+(o.users_7?'':' zero'),(o.users_7?'+'+fmtN(o.users_7):'±0')+' in 7 Tagen · +'+fmtN(o.users_30)+' in 30 Tagen');hero.append(dl);
+  const hero=el('div','card hero');hero.append(el('div','lbl','Konten gesamt'),el('div','big',fmtN(o.users)));const dl=el('div','delta'+(o.users_7?'':' zero'),(o.users_7?'+'+fmtN(o.users_7):'±0')+' in 7 Tagen · +'+fmtN(o.users_30)+' in 30 Tagen');hero.append(dl);
+  hero.append(el('div','delta zero',dl0?'Gelöscht: '+fmtN(dl0.deleted)+(dl0.deleted_30?' (davon '+fmtN(dl0.deleted_30)+' in 30 Tagen)':'')+' · jemals angelegt: '+fmtN((+o.users)+(+dl0.deleted))+(dl0.since?' · gezählt seit '+dLong(dl0.since):' · Zählung läuft ab jetzt'):'Gelöschte Konten: Supabase-Nachtrag fehlt'));
   hero.classList.add('tap');hero.onclick=()=>goSec('Nutzer und Clubs');const tA=(t,v,h,k)=>{const c=tile(t,v,h);c.classList.add('tap');c.title='Antippen: Liste der Nutzer';c.setAttribute('role','button');c.tabIndex=0;c.onclick=()=>openList(k,t);c.onkeydown=e=>{if(e.key==='Enter')openList(k,t)};return c};
   g.append(hero,tA('Heute aktiv',o.dau,'Nutzer, die die App heute geöffnet haben','act1'),tA('Aktiv in 7 Tagen',o.wau,'verschiedene Nutzer','act7'),tA('Aktiv in 30 Tagen',o.mau,o.users?Math.round(o.mau/o.users*100)+' % aller Konten':'','act30'));m.append(g);
   const g2=el('div','grid g3');g2.style.marginTop='14px';
   g2.append(tile('App-Starts (30 Tage)',o.opens_30,o.mau?'Ø '+(o.opens_30/o.mau).toFixed(1).replace('.',',')+' je aktivem Nutzer':''),tile('Ø aktive Tage je Nutzer',o.active_days_30,'in den letzten 30 Tagen',true),repTile(o.reports_open));m.append(g2);
   // Verläufe
-  const s1=el('section');s1.append(el('h3',null,'Verlauf · '+(ST.days===365?'1 Jahr':ST.days+' Tage')));const cg=el('div','grid g2');
-  cg.append(chartCard('Aktive Nutzer pro Tag','Summe im Zeitraum: '+fmtN(sum('opens'))+' App-Starts',D,'active','line'),chartCard('Neue Konten pro Tag','Im Zeitraum: '+fmtN(sum('new_users')),D,'new_users','bar'),
-    chartCard('Geteilte Aktivitäten pro Tag','Im Zeitraum: '+fmtN(sum('activities')),D,'activities','bar'),chartCard('Beiträge und Kommentare pro Tag','Beiträge: '+fmtN(sum('posts'))+' · Kommentare: '+fmtN(sum('comments')),D.map(x=>Object.assign({},x,{pc:(x.posts||0)+(x.comments||0)})),'pc','bar'));
+  const s1=el('section');s1.append(el('h3',null,'Verlauf · '+rngT(ST.days)+(D0.length?' · ab '+dLong(D0[0].day):'')));const cg=el('div','grid g2');
+  cg.append(chartCard((ST.g==='d'?'Aktive Nutzer pro Tag':'Ø aktive Nutzer pro Tag ('+(ST.g==='w'?'je Woche':'je Monat')+')'),'Summe im Zeitraum: '+fmtN(sum('opens'))+' App-Starts',D,'active','line',ST.g),chartCard('App-Starts '+pt,'Im Zeitraum: '+fmtN(sum('opens')),D,'opens','bar',ST.g),
+    chartCard('Neue Konten '+pt,'Im Zeitraum: '+fmtN(sum('new_users')),D,'new_users','bar',ST.g),chartCard('Gelöschte Konten '+pt,'Im Zeitraum: '+fmtN(sum('deleted'))+(dl0&&dl0.since?'':' · Zählung ab Supabase-Nachtrag'),D,'deleted','bar',ST.g),
+    chartCard('Geteilte Aktivitäten '+pt,'Im Zeitraum: '+fmtN(sum('activities')),D,'activities','bar',ST.g),chartCard('Beiträge und Kommentare '+pt,'Beiträge: '+fmtN(sum('posts'))+' · Kommentare: '+fmtN(sum('comments')),D.map(x=>Object.assign({},x,{pc:(x.posts||0)+(x.comments||0)})),'pc','bar',ST.g));
   s1.append(cg);m.append(s1);
   // Inhalte
   const s2=el('section');s2.append(el('h3',null,'Inhalte'));const ig=el('div','grid g6');
@@ -328,19 +338,19 @@ function repTile(n){const c=el('div','card tile'+(n?' alert':''));c.append(el('d
 
 // ---------- Diagramme (eine Reihe je Diagramm, Hover + Tabelle) ----------
 function niceMax(v){const raw=Math.max(1,v)/4,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p,st=Math.max(1,(f<=1?1:f<=2?2:f<=5?5:10)*p);return st*4}
-function chartCard(title,sub,D,key,kind){const c=el('div','card');const hd=el('div','chead');const tt=el('div');tt.append(el('h2',null,title),el('p','sub',sub));
+function chartCard(title,sub,D,key,kind,G){G=G||'d';const c=el('div','card');const hd=el('div','chead');const tt=el('div');tt.append(el('h2',null,title),el('p','sub',sub));
   const tb=el('button','tbtn','Tabelle');tb.type='button';tb.setAttribute('aria-pressed','false');hd.append(tt,el('span','sp'),tb);c.append(hd);
   const box=el('div','chart');c.append(box);const tab=el('div','tscroll');tab.hidden=true;c.append(tab);
   tb.onclick=()=>{const on=tab.hidden;tab.hidden=!on;box.hidden=on;tb.setAttribute('aria-pressed',String(on));tb.textContent=on?'Diagramm':'Tabelle'};
-  const t=el('table');t.innerHTML='<thead><tr><th>Tag</th><th class="n">'+title.replace(/ pro Tag/,'')+'</th></tr></thead>';const bd=el('tbody');D.slice().reverse().forEach(x=>{const r=el('tr');r.append(el('td',null,dLong(x.day)),el('td','n',fmtN(x[key])));bd.append(r)});t.append(bd);tab.append(t);
-  drawChart(box,D,key,kind,title);return c}
-function drawChart(box,D,key,kind,title){const W=560,H=210,L=34,R=10,T=14,B=26,n=D.length,vals=D.map(x=>x[key]||0),mx=niceMax(Math.max(1,...vals)),pw=W-L-R,ph=H-T-B;
+  const t=el('table');t.innerHTML='<thead><tr><th>'+({d:'Tag',w:'Woche ab',m:'Monat'})[G]+'</th><th class="n">'+title.replace(/ pro (Tag|Woche|Monat)$/,'')+'</th></tr></thead>';const bd=el('tbody');D.slice().reverse().forEach(x=>{const r=el('tr');r.append(el('td',null,G==='m'?new Date(x.day+'T12:00:00').toLocaleDateString('de-AT',{month:'long',year:'numeric'}):dLong(x.day)),el('td','n',fmtN(x[key])));bd.append(r)});t.append(bd);tab.append(t);
+  drawChart(box,D,key,kind,title,G);return c}
+function drawChart(box,D,key,kind,title,G){const W=560,H=210,L=34,R=10,T=14,B=26,n=D.length,vals=D.map(x=>x[key]||0),mx=niceMax(Math.max(1,...vals)),pw=W-L-R,ph=H-T-B;
   const X=i=>L+(n<=1?pw/2:kind==='bar'?(i+.5)*pw/n:i*pw/(n-1)),Y=v=>T+ph-(v/mx)*ph;const NS='http://www.w3.org/2000/svg';const sv=document.createElementNS(NS,'svg');sv.setAttribute('viewBox','0 0 '+W+' '+H);sv.setAttribute('role','img');
-  const total=vals.reduce((a,b)=>a+b,0);sv.setAttribute('aria-label',title+': '+n+' Tage, höchster Wert '+Math.max(...vals)+', zusammen '+total);
+  const total=vals.reduce((a,b)=>a+b,0);sv.setAttribute('aria-label',title+': '+n+' Werte, höchster Wert '+Math.max(...vals)+', zusammen '+total);
   const mk=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);(p||sv).append(e);return e};
   const gg=mk('g',{class:'grid'});for(let k=0;k<=4;k++){const v=mx*k/4,y=Y(v);if(k)mk('line',{x1:L,x2:W-R,y1:y,y2:y},gg);const tx=mk('text',{x:L-6,y:y+4,'text-anchor':'end'});tx.textContent=v>=1000?String(Math.round(v/100)/10).replace('.',',')+'K':String(Math.round(v*10)/10)}
   mk('line',{x1:L,x2:W-R,y1:Y(0),y2:Y(0),class:'base'});
-  const step=Math.max(1,Math.ceil(n/7));D.forEach((x,i)=>{if(i%step&&i!==n-1)return;if(i!==n-1&&n-1-i<step*.6)return;const tx=mk('text',{x:X(i),y:H-8,'text-anchor':i===0&&kind!=='bar'?'start':i===n-1&&kind!=='bar'?'end':'middle'});tx.textContent=dShort(x.day)});
+  const step=Math.max(1,Math.ceil(n/7));D.forEach((x,i)=>{if(i%step&&i!==n-1)return;if(i!==n-1&&n-1-i<step*.6)return;const tx=mk('text',{x:X(i),y:H-8,'text-anchor':i===0&&kind!=='bar'?'start':i===n-1&&kind!=='bar'?'end':'middle'});tx.textContent=dShort(x.day,G)});
   const col=getComputedStyle(document.documentElement).getPropertyValue('--series').trim(),wash=getComputedStyle(document.documentElement).getPropertyValue('--series-wash').trim(),surf=getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
   if(kind==='line'){const pts=vals.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1));mk('path',{d:'M'+X(0)+','+Y(0)+' L'+pts.join(' L')+' L'+X(n-1)+','+Y(0)+'Z',fill:wash,stroke:'none'});
     mk('polyline',{points:pts.join(' '),fill:'none',stroke:col,'stroke-width':2,'stroke-linejoin':'round','stroke-linecap':'round'});
@@ -351,7 +361,7 @@ function drawChart(box,D,key,kind,title){const W=560,H=210,L=34,R=10,T=14,B=26,n
   const cross=mk('line',{x1:0,x2:0,y1:T,y2:Y(0),stroke:'var(--axis)','stroke-width':1,opacity:0});const dot=kind==='line'?mk('circle',{r:4.5,fill:col,stroke:surf,'stroke-width':2,opacity:0}):null;
   const hit=mk('rect',{x:L,y:0,width:pw,height:H,fill:'transparent',tabindex:0});box.append(sv);const tip=el('div','tip');box.append(tip);
   const show=i=>{i=Math.max(0,Math.min(n-1,i));const x=X(i);cross.setAttribute('x1',x);cross.setAttribute('x2',x);cross.setAttribute('opacity',1);if(dot){dot.setAttribute('cx',x);dot.setAttribute('cy',Y(vals[i]));dot.setAttribute('opacity',1)}
-    tip.innerHTML='';tip.append(el('b',null,fmtN(vals[i])),el('span',null,new Date(D[i].day+'T12:00:00').toLocaleDateString('de-AT',{weekday:'short',day:'numeric',month:'short'})));
+    tip.innerHTML='';tip.append(el('b',null,fmtN(vals[i])),el('span',null,(G==='m'?new Date(D[i].day+'T12:00:00').toLocaleDateString('de-AT',{month:'long',year:'numeric'}):(G==='w'?'Woche ab ':'')+new Date(D[i].day+'T12:00:00').toLocaleDateString('de-AT',{weekday:'short',day:'numeric',month:'short'}))));
     const r=sv.getBoundingClientRect(),k=r.width/W;tip.style.left=Math.max(50,Math.min(r.width-50,x*k))+'px';tip.style.top=(Math.min(Y(vals[i]),T+ph*.5)*k-6)+'px';tip.classList.add('on');hit._i=i};
   const hide=()=>{cross.setAttribute('opacity',0);if(dot)dot.setAttribute('opacity',0);tip.classList.remove('on')};
   const idx=e=>{const r=sv.getBoundingClientRect(),px=(e.clientX-r.left)*W/r.width;return kind==='bar'?Math.floor((px-L)/(pw/n)):Math.round((px-L)/(pw/Math.max(1,n-1)))};
