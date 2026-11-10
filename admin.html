@@ -152,6 +152,9 @@ section.coll > h3.fold::after{transform:rotate(-90deg)}section.coll > :not(h3){d
 .prorow{border:1px solid var(--line,#E2E4E0);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}.prorow.off{opacity:.6}
 .prohd{display:flex;flex-direction:column;gap:2px}.prochips{display:flex;flex-wrap:wrap;gap:6px}.pchip{border:1px solid var(--line,#E2E4E0);background:transparent;border-radius:99px;padding:5px 10px;font:inherit;font-size:.85rem;cursor:pointer;color:inherit}.pchip.on{background:#1E50FF;border-color:#1E50FF;color:#fff}
 .progrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.progrid label{display:flex;flex-direction:column;gap:4px}.lbl2{font-size:.78rem;font-weight:700;color:var(--muted,#6B7178)}.proft{display:flex;justify-content:space-between;align-items:center}.prochk{display:flex;align-items:center;gap:6px;font-weight:700}
+
+.lgnd{display:flex;gap:14px;flex-wrap:wrap;font-size:.75rem;color:var(--ink-2);margin:-4px 0 6px}.lgnd span{display:inline-flex;align-items:center;gap:6px}.lgnd .sw{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--series)}.lgnd .sw.ln{height:3px;border-radius:2px;background:var(--good)}
+:root:not([data-theme="light"]) .chart .ln2{filter:drop-shadow(0 0 6px rgba(43,255,160,.6))}
 /* === Design „Futur“ (11/2026) === */
 :root[data-theme="dark"],:root:not([data-theme="light"]){color-scheme:dark;
  --page:#05070d;--surface:rgba(16,22,38,.62);--surface-2:rgba(30,42,70,.55);--ink:#eaf1ff;--ink-2:#a9b8d6;--muted:#7383a3;
@@ -309,7 +312,7 @@ function render(){const m=$('#main');if(!m)return;m.innerHTML='';$('#stamp').tex
   // Verläufe
   const s1=el('section');s1.append(el('h3',null,'Verlauf · '+rngT(ST.days)+(D0.length?' · ab '+dLong(D0[0].day):'')));const cg=el('div','grid g2');
   cg.append(chartCard((ST.g==='d'?'Aktive Nutzer pro Tag':'Ø aktive Nutzer pro Tag ('+(ST.g==='w'?'je Woche':'je Monat')+')'),'Summe im Zeitraum: '+fmtN(sum('opens'))+' App-Starts',D,'active','line',ST.g),chartCard('App-Starts '+pt,'Im Zeitraum: '+fmtN(sum('opens')),D,'opens','bar',ST.g),
-    chartCard('Neue Konten '+pt,'Im Zeitraum: '+fmtN(sum('new_users')),D,'new_users','bar',ST.g),chartCard('Gelöschte Konten '+pt,'Im Zeitraum: '+fmtN(sum('deleted'))+(dl0&&dl0.since?'':' · Zählung ab Supabase-Nachtrag'),D,'deleted','bar',ST.g),
+    chartCard('Neue Konten '+pt,'Im Zeitraum: '+fmtN(sum('new_users'))+' · Linie: Konten gesamt',(()=>{let run=+o.users||0;for(let i=D.length-1;i>=0;i--){D[i].total=run;run-=(D[i].new_users||0)-(D[i].deleted||0)}return D})(),'new_users','bar',ST.g,{key:'total',label:'Konten gesamt'}),chartCard('Gelöschte Konten '+pt,'Im Zeitraum: '+fmtN(sum('deleted'))+(dl0&&dl0.since?'':' · Zählung ab Supabase-Nachtrag'),D,'deleted','bar',ST.g),
     chartCard('Geteilte Aktivitäten '+pt,'Im Zeitraum: '+fmtN(sum('activities')),D,'activities','bar',ST.g),chartCard('Beiträge und Kommentare '+pt,'Beiträge: '+fmtN(sum('posts'))+' · Kommentare: '+fmtN(sum('comments')),D.map(x=>Object.assign({},x,{pc:(x.posts||0)+(x.comments||0)})),'pc','bar',ST.g));
   s1.append(cg);m.append(s1);
   // Inhalte
@@ -379,13 +382,13 @@ function repTile(n){const c=el('div','card tile'+(n?' alert':''));c.append(el('d
 
 // ---------- Diagramme (eine Reihe je Diagramm, Hover + Tabelle) ----------
 function niceMax(v){const raw=Math.max(1,v)/4,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p,st=Math.max(1,(f<=1?1:f<=2?2:f<=5?5:10)*p);return st*4}
-function chartCard(title,sub,D,key,kind,G){G=G||'d';const c=el('div','card');const hd=el('div','chead');const tt=el('div');tt.append(el('h2',null,title),el('p','sub',sub));
+function chartCard(title,sub,D,key,kind,G,L2){G=G||'d';const c=el('div','card');const hd=el('div','chead');const tt=el('div');tt.append(el('h2',null,title),el('p','sub',sub));
   const tb=el('button','tbtn','Tabelle');tb.type='button';tb.setAttribute('aria-pressed','false');hd.append(tt,el('span','sp'),tb);c.append(hd);
   const box=el('div','chart');c.append(box);const tab=el('div','tscroll');tab.hidden=true;c.append(tab);
   tb.onclick=()=>{const on=tab.hidden;tab.hidden=!on;box.hidden=on;tb.setAttribute('aria-pressed',String(on));tb.textContent=on?'Diagramm':'Tabelle'};
-  const t=el('table');t.innerHTML='<thead><tr><th>'+({d:'Tag',w:'Woche ab',m:'Monat'})[G]+'</th><th class="n">'+title.replace(/ pro (Tag|Woche|Monat)$/,'')+'</th></tr></thead>';const bd=el('tbody');D.slice().reverse().forEach(x=>{const r=el('tr');r.append(el('td',null,G==='m'?new Date(x.day+'T12:00:00').toLocaleDateString('de-AT',{month:'long',year:'numeric'}):dLong(x.day)),el('td','n',fmtN(x[key])));bd.append(r)});t.append(bd);tab.append(t);
-  drawChart(box,D,key,kind,title,G);return c}
-function drawChart(box,D,key,kind,title,G){const W=560,H=210,L=34,R=10,T=14,B=26,n=D.length,vals=D.map(x=>x[key]||0),mx=niceMax(Math.max(1,...vals)),pw=W-L-R,ph=H-T-B;
+  const t=el('table');t.innerHTML='<thead><tr><th>'+({d:'Tag',w:'Woche ab',m:'Monat'})[G]+'</th><th class="n">'+title.replace(/ pro (Tag|Woche|Monat)$/,'')+'</th>'+(L2?'<th class="n">'+L2.label+'</th>':'')+'</tr></thead>';const bd=el('tbody');D.slice().reverse().forEach(x=>{const r=el('tr');r.append(el('td',null,G==='m'?new Date(x.day+'T12:00:00').toLocaleDateString('de-AT',{month:'long',year:'numeric'}):dLong(x.day)),el('td','n',fmtN(x[key])));if(L2)r.append(el('td','n',fmtN(x[L2.key])));bd.append(r)});t.append(bd);tab.append(t);
+  drawChart(box,D,key,kind,title,G,L2);if(L2){const lg=el('div','lgnd');lg.innerHTML='<span><i class="sw bar"></i>'+title.replace(/ pro (Tag|Woche|Monat)$/,'')+' (links)</span><span><i class="sw ln"></i>'+L2.label+' (rechts)</span>';c.insertBefore(lg,box)}return c}
+function drawChart(box,D,key,kind,title,G,L2){const W=560,H=210,L=34,R=L2?40:10,T=14,B=26,n=D.length,vals=D.map(x=>x[key]||0),mx=niceMax(Math.max(1,...vals)),pw=W-L-R,ph=H-T-B;
   const X=i=>L+(n<=1?pw/2:kind==='bar'?(i+.5)*pw/n:i*pw/(n-1)),Y=v=>T+ph-(v/mx)*ph;const NS='http://www.w3.org/2000/svg';const sv=document.createElementNS(NS,'svg');sv.setAttribute('viewBox','0 0 '+W+' '+H);sv.setAttribute('role','img');
   const total=vals.reduce((a,b)=>a+b,0);sv.setAttribute('aria-label',title+': '+n+' Werte, höchster Wert '+Math.max(...vals)+', zusammen '+total);
   const mk=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);(p||sv).append(e);return e};
@@ -399,11 +402,15 @@ function drawChart(box,D,key,kind,title,G){const W=560,H=210,L=34,R=10,T=14,B=26
   else{const bw=Math.min(24,Math.max(2,pw/n-2));vals.forEach((v,i)=>{if(!v)return;const x=X(i)-bw/2,y=Y(v),h=Y(0)-y,r=Math.min(4,bw/2,h);
       mk('path',{d:'M'+x+','+Y(0)+' V'+(y+r)+' Q'+x+','+y+' '+(x+r)+','+y+' H'+(x+bw-r)+' Q'+(x+bw)+','+y+' '+(x+bw)+','+(y+r)+' V'+Y(0)+' Z',fill:col})});
     const mi=vals.indexOf(Math.max(...vals));if(vals[mi]>0){const lb=mk('text',{x:X(mi),y:Y(vals[mi])-6,'text-anchor':'middle',class:'lab'});lb.textContent=fmtN(vals[mi])}}
+  let v2=null,Y2=null;if(L2){v2=D.map(x=>x[L2.key]||0);const lo=Math.min(...v2),hi=Math.max(1,...v2),mx2=niceMax(hi),mn2=lo>hi*0.5?Math.floor(lo*0.9/10)*10:0;Y2=v=>T+ph-((v-mn2)/Math.max(1,mx2-mn2))*ph;const lc=getComputedStyle(document.documentElement).getPropertyValue('--good').trim()||'#0ca30c';
+    for(let k=0;k<=4;k++){const v=mn2+(mx2-mn2)*k/4,tx=mk('text',{x:W-R+6,y:Y2(v)+4,'text-anchor':'start'});tx.textContent=v>=1000?String(Math.round(v/100)/10).replace('.',',')+'K':String(Math.round(v))}
+    const p2=v2.map((v,i)=>X(i).toFixed(1)+','+Y2(v).toFixed(1));mk('polyline',{points:p2.join(' '),fill:'none',stroke:lc,'stroke-width':2.5,'stroke-linejoin':'round','stroke-linecap':'round',class:'ln2'});
+    mk('circle',{cx:X(n-1),cy:Y2(v2[n-1]),r:4.5,fill:lc,stroke:surf,'stroke-width':2});const l2=mk('text',{x:X(n-1)-8,y:Y2(v2[n-1])-10,'text-anchor':'end',class:'lab'});l2.textContent=fmtN(v2[n-1])}
   const cross=mk('line',{x1:0,x2:0,y1:T,y2:Y(0),stroke:'var(--axis)','stroke-width':1,opacity:0});const dot=kind==='line'?mk('circle',{r:4.5,fill:col,stroke:surf,'stroke-width':2,opacity:0}):null;
   const hit=mk('rect',{x:L,y:0,width:pw,height:H,fill:'transparent',tabindex:0});box.append(sv);const tip=el('div','tip');box.append(tip);
   const show=i=>{i=Math.max(0,Math.min(n-1,i));const x=X(i);cross.setAttribute('x1',x);cross.setAttribute('x2',x);cross.setAttribute('opacity',1);if(dot){dot.setAttribute('cx',x);dot.setAttribute('cy',Y(vals[i]));dot.setAttribute('opacity',1)}
-    tip.innerHTML='';tip.append(el('b',null,fmtN(vals[i])),el('span',null,(G==='m'?new Date(D[i].day+'T12:00:00').toLocaleDateString('de-AT',{month:'long',year:'numeric'}):(G==='w'?'Woche ab ':'')+new Date(D[i].day+'T12:00:00').toLocaleDateString('de-AT',{weekday:'short',day:'numeric',month:'short'}))));
-    const r=sv.getBoundingClientRect(),k=r.width/W;tip.style.left=Math.max(50,Math.min(r.width-50,x*k))+'px';tip.style.top=(Math.min(Y(vals[i]),T+ph*.5)*k-6)+'px';tip.classList.add('on');hit._i=i};
+    tip.innerHTML='';tip.append(el('b',null,fmtN(vals[i])+(L2?' neu · '+fmtN(v2[i])+' gesamt':'')),el('span',null,(G==='m'?new Date(D[i].day+'T12:00:00').toLocaleDateString('de-AT',{month:'long',year:'numeric'}):(G==='w'?'Woche ab ':'')+new Date(D[i].day+'T12:00:00').toLocaleDateString('de-AT',{weekday:'short',day:'numeric',month:'short'}))));
+    const r=sv.getBoundingClientRect(),k=r.width/W;const hw=Math.min(r.width/2,tip.offsetWidth/2+4);tip.style.left=Math.max(hw,Math.min(r.width-hw,x*k))+'px';tip.style.top=(Math.min(Y(vals[i]),T+ph*.5)*k-6)+'px';tip.classList.add('on');hit._i=i};
   const hide=()=>{cross.setAttribute('opacity',0);if(dot)dot.setAttribute('opacity',0);tip.classList.remove('on')};
   const idx=e=>{const r=sv.getBoundingClientRect(),px=(e.clientX-r.left)*W/r.width;return kind==='bar'?Math.floor((px-L)/(pw/n)):Math.round((px-L)/(pw/Math.max(1,n-1)))};
   hit.addEventListener('pointermove',e=>show(idx(e)));hit.addEventListener('pointerleave',hide);hit.addEventListener('focus',()=>show(n-1));hit.addEventListener('blur',hide);
