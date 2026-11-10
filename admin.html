@@ -196,6 +196,7 @@ section.coll > h3.fold::after{transform:rotate(-90deg)}section.coll > :not(h3){d
 button.glow{border-color:var(--accent);box-shadow:0 0 16px color-mix(in srgb,var(--accent) 60%,transparent)}
 @media (max-width:640px){#liveBar #liveT{display:none}:root:not([data-theme="light"]) .hero .big{font-size:3.2rem}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.mini.mtap{cursor:pointer;font:inherit;color:inherit;text-align:left;border:1px solid var(--line,rgba(127,127,127,.3))}.mini.mtap span{color:#4D7CFF}.mini.mtap:hover,.mini.mtap.on{border-color:#4D7CFF;box-shadow:0 0 0 2px rgba(77,124,255,.25)}.uitems{margin-top:10px}.uitems h3{margin:6px 0}.memname{all:unset;cursor:pointer;font-weight:700;color:#4D7CFF;text-decoration:underline;text-underline-offset:3px}.memlist li.memdet{display:block!important;width:100%;list-style:none;padding:10px 0 14px;border-bottom:1px solid var(--line,rgba(127,127,127,.25))}
 </style>
 </head>
 <body>
@@ -732,9 +733,27 @@ function backupCard(){const c=el('div','card');c.append(el('h2',null,'Sicherung 
 
 // ---------- 1.0.57: Details zu Nutzern und Clubs (G11), offizielles Konto (G14) ----------
 async function userDetail(u,row){const old=row.nextElementSibling;if(old&&old.classList.contains('detrow')){old.remove();return}
-  const tr=el('tr','detrow'),td=el('td');td.colSpan=8;tr.append(td);row.after(tr);td.append(el('p','empty','Lade …'));
-  try{const D=await rpc('admin_user_detail',{p_user:u.id});td.innerHTML='';const g=el('div','detgrid');
-    [['Geteilte Aktivitäten',D.activities],['Beiträge',D.posts],['Kommentare',D.comments],['Abonnenten',D.followers],['Abonniert',D.following],['Gemeldet',D.reports_against],['Uhren',D.devices],['Zuletzt aktiv',D.last_seen?dLong(D.last_seen):'–']].forEach(([l,v])=>{const c=el('div','mini');c.append(el('b',null,v==null?'–':String(v)),el('span',null,l));g.append(c)});td.append(g);
+  const tr=el('tr','detrow'),td=el('td');td.colSpan=8;tr.append(td);row.after(tr);await userDetailInto(u,td)}
+// 10.11.2026 (Josef): Zahlen Geteilte Aktivitäten / Beiträge / Kommentare antippen → Liste der Inhalte dieser Person (mit Entfernen)
+async function userItems(u,kind,box){box.innerHTML='';box.append(el('p','empty','Lade …'));
+  try{let L;if(kind==='comments'){L=((await rpc('admin_comments',{p_query:u.username,p_limit:300}))||[]).filter(x=>x.author===u.id)}
+    else{L=((await rpc('admin_contents',{p_query:u.username,p_limit:300}))||[]).filter(x=>x.owner===u.id&&(kind==='posts'?x.mode==='post':x.mode!=='post'))}
+    box.innerHTML='';box.append(el('h3',null,{comments:'Kommentare',posts:'Beiträge',activities:'Geteilte Aktivitäten'}[kind]+' von @'+u.username+' ('+L.length+')'));
+    if(!L.length){box.append(el('p','empty','Nichts gefunden.'));return}
+    const fmt=t=>new Date(t).toLocaleString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    L.forEach(x=>{const d=el('div','rep');
+      if(kind==='comments'){d.append(el('div','meta',fmt(x.created_at)+' · bei „'+(x.act_name||'Beitrag')+'“ von @'+(x.act_owner_username||'?')),el('div','ctx',x.body));
+        const a=el('div','acts');a.append(btnA('Kommentar löschen','danger',async()=>{const why=prompt('Grund (bekommt die Person als Hinweis in der App):','Verstoß gegen die Nutzungsbedingungen');if(why===null)return;await rpc('admin_delete_comment',{p_id:x.id,p_reason:why});d.remove()},'Diesen Kommentar löschen?'));d.append(a)}
+      else{const typ=x.mode==='post'?'Beitrag':x.mode==='mx'?'Motocross':x.mode==='race'?'Enduro Race':'Enduro';d.append(el('div','meta',fmt(x.created_at)+' · '+typ+(x.group_name?' · Club '+x.group_name:'')+(x.photos?' · '+x.photos+' Foto'+(x.photos>1?'s':''):'')));
+        if(x.name)d.append(el('b',null,x.name));if(x.body)d.append(el('div','ctx',x.body));
+        const a=el('div','acts');a.append(btnA('Entfernen','danger',async()=>{const why=prompt('Grund (bekommt die Person als Hinweis in der App):','Verstoß gegen die Nutzungsbedingungen');if(why===null)return;await rpc('admin_remove_content',{p_activity:x.id,p_reason:why});d.remove()},'Diesen Inhalt für alle entfernen?'));d.append(a)}
+      box.append(d)})}
+  catch(e){box.innerHTML='';box.append(el('p','err',e.message))}}
+async function userDetailInto(u,td){td.innerHTML='';td.append(el('p','empty','Lade …'));
+  try{const D=await rpc('admin_user_detail',{p_user:u.id});td.innerHTML='';const g=el('div','detgrid');const ub=el('div','uitems');let open='';
+    const KIND={'Geteilte Aktivitäten':'activities','Beiträge':'posts','Kommentare':'comments'};
+    [['Geteilte Aktivitäten',D.activities],['Beiträge',D.posts],['Kommentare',D.comments],['Abonnenten',D.followers],['Abonniert',D.following],['Gemeldet',D.reports_against],['Uhren',D.devices],['Zuletzt aktiv',D.last_seen?dLong(D.last_seen):'–']].forEach(([l,v])=>{const k=KIND[l],tap=k&&+v>0;const c=el(tap?'button':'div','mini'+(tap?' mtap':''));if(tap)c.type='button';c.append(el('b',null,v==null?'–':String(v)),el('span',null,l+(tap?' ›':'')));
+      if(tap)c.onclick=()=>{g.querySelectorAll('.mini.on').forEach(x=>x.classList.remove('on'));if(open===k){open='';ub.innerHTML='';return}open=k;c.classList.add('on');userItems(u,k,ub)};g.append(c)});td.append(g,ub);
     if((D.clubs||[]).length)td.append(el('p','sub','Clubs: '+D.clubs.map(c=>c.name+(c.role!=='member'?' ('+(c.role==='owner'?'Gründer':'Admin')+')':'')).join(', ')));
     const oc=el('div','offbox');oc.append(el('b',null,D.official?'✓ Offizielles Konto':'Kein offizielles Konto'));if(D.official_note)oc.append(el('div','sub','Nachweis: '+D.official_note));
     if(!D.official)oc.append(btnA('Als offiziell kennzeichnen','',async()=>{if(!confirm('Hast du geprüft, dass wirklich die Firma/der Verein dahintersteht (z. B. Mail von der Firmenadresse)?'))return;const note=prompt('Wie geprüft? (nur für dich, z. B. „Mail von marketing@ktm.com am 30.10.“)','');if(note===null)return;await rpc('admin_set_user_official',{p_user:u.id,p_on:true,p_note:note});await loadAll()}));
@@ -742,7 +761,9 @@ async function userDetail(u,row){const old=row.nextElementSibling;if(old&&old.cl
     oc.append(el('p','sub','Offizielle Konten bekommen in der App ein Häkchen. Ihre Beiträge sind beim Posten standardmäßig als „Anzeige“ gekennzeichnet.'));td.append(oc)}
   catch(e){td.innerHTML='';td.append(el('p','err',/PGRST202/.test(e.code||e.message)?'Bitte die neue SQL-Datei in Supabase ausführen.':e.message))}}
 async function clubMembers(g,row,b){const old=row.nextElementSibling;if(old&&old.classList.contains('detrow')){old.remove();return}const tr=el('tr','detrow'),td=el('td');td.colSpan=4;tr.append(td);row.after(tr);td.append(el('p','empty','Lade …'));
-  try{const L=(await rpc('admin_club_members',{p_group:g.id}))||[];td.innerHTML='';const ul=el('ul','memlist');L.forEach(m=>{const li=el('li');li.append(el('b',null,'@'+m.username),document.createTextNode(' '+(m.display_name||'')),el('span','badge'+(m.role!=='member'?' good':''),m.status==='invited'?'eingeladen':m.role==='owner'?'Gründer':m.role==='admin'?'Admin':'Mitglied'));ul.append(li)});
+  try{const L=(await rpc('admin_club_members',{p_group:g.id}))||[];td.innerHTML='';const ul=el('ul','memlist');L.forEach(m=>{const li=el('li');
+    // 10.11.2026 (Josef): Mitglied antippen → Details wie bei Nutzer (Zahlen, Beiträge …)
+    const nb=el('button','memname','@'+m.username);nb.type='button';nb.onclick=()=>{const nx=li.nextElementSibling;if(nx&&nx.classList.contains('memdet')){nx.remove();return}const dv=el('li','memdet');li.after(dv);userDetailInto({id:m.user_id,username:m.username},dv)};li.append(nb,document.createTextNode(' '+(m.display_name||'')),el('span','badge'+(m.role!=='member'?' good':''),m.status==='invited'?'eingeladen':m.role==='owner'?'Gründer':m.role==='admin'?'Admin':'Mitglied'));ul.append(li)});
     td.append(L.length?ul:el('p','empty','Keine Mitglieder.'))}catch(e){td.innerHTML='';td.append(el('p','err',e.message))}}
 // ---------- G13: E-Mail-Benachrichtigungen ----------
 function notifySec(){const s=el('section');s.append(el('h3',null,'Benachrichtigungen (Mitteilung aufs iPhone)'));const c=el('div','card');const S=ST.set||{};const A=Object.assign({users:true,reports:true,storage:true,mapbox:true,weekly:false,backup:true},S.alert_cfg||{});
