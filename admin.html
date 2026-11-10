@@ -152,6 +152,47 @@ section.coll > h3.fold::after{transform:rotate(-90deg)}section.coll > :not(h3){d
 .prorow{border:1px solid var(--line,#E2E4E0);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}.prorow.off{opacity:.6}
 .prohd{display:flex;flex-direction:column;gap:2px}.prochips{display:flex;flex-wrap:wrap;gap:6px}.pchip{border:1px solid var(--line,#E2E4E0);background:transparent;border-radius:99px;padding:5px 10px;font:inherit;font-size:.85rem;cursor:pointer;color:inherit}.pchip.on{background:#1E50FF;border-color:#1E50FF;color:#fff}
 .progrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.progrid label{display:flex;flex-direction:column;gap:4px}.lbl2{font-size:.78rem;font-weight:700;color:var(--muted,#6B7178)}.proft{display:flex;justify-content:space-between;align-items:center}.prochk{display:flex;align-items:center;gap:6px;font-weight:700}
+/* === Design „Futur“ (11/2026) === */
+:root[data-theme="dark"],:root:not([data-theme="light"]){color-scheme:dark;
+ --page:#05070d;--surface:rgba(16,22,38,.62);--surface-2:rgba(30,42,70,.55);--ink:#eaf1ff;--ink-2:#a9b8d6;--muted:#7383a3;
+ --line:rgba(120,160,255,.14);--axis:rgba(120,160,255,.25);--accent:#3d7bff;--accent-ink:#fff;--series:#48c6ff;--series-wash:rgba(72,198,255,.16);
+ --good:#2bffa0;--good-ink:#2bffa0;--warn:#ffc04d;--crit:#ff4d6d;--ring:rgba(120,160,255,.18);--shadow:0 0 0 1px rgba(120,160,255,.08),0 10px 40px rgba(0,10,40,.55)}
+:root:not([data-theme="light"]) body,:root[data-theme="dark"] body{background:radial-gradient(1200px 700px at 85% -10%,rgba(30,80,255,.28),transparent 60%),radial-gradient(900px 600px at -10% 110%,rgba(0,200,255,.14),transparent 60%),#05070d;min-height:100vh}
+:root:not([data-theme="light"]) body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(90,130,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(90,130,255,.07) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 30%,transparent 80%);mask-image:radial-gradient(ellipse at 50% 0%,#000 30%,transparent 80%)}
+.wrap{position:relative;z-index:1}
+:root:not([data-theme="light"]) .card{backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border-radius:18px;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s}
+:root:not([data-theme="light"]) .card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;padding:1px;background:linear-gradient(135deg,rgba(120,170,255,.55),rgba(120,170,255,.05) 40%,rgba(72,198,255,.35));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+@media (hover:hover){:root:not([data-theme="light"]) .card:hover{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(120,170,255,.25),0 18px 50px rgba(30,80,255,.25)}}
+:root:not([data-theme="light"]) .hero{background:linear-gradient(140deg,rgba(30,80,255,.45),rgba(16,22,38,.6) 60%)}
+:root:not([data-theme="light"]) .hero .big{font-size:4.2rem;background:linear-gradient(90deg,#fff,#9cc4ff 60%,#48c6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .big,.tile .val,.mini .val{font-variant-numeric:tabular-nums}
+:root:not([data-theme="light"]) .tile .val,:root:not([data-theme="light"]) .mini .val{text-shadow:0 0 18px rgba(72,198,255,.35)}
+:root:not([data-theme="light"]) .brand small{color:#48c6ff;text-transform:uppercase;letter-spacing:.18em;font-size:.7rem}
+:root:not([data-theme="light"]) .seg{background:rgba(10,16,30,.7)}
+:root:not([data-theme="light"]) .seg button[aria-pressed="true"]{background:linear-gradient(90deg,#1e50ff,#48c6ff);color:#fff;box-shadow:0 0 18px rgba(72,160,255,.55)}
+:root:not([data-theme="light"]) section>h3,:root:not([data-theme="light"]) section>.chead h3{color:#7fa6ff;letter-spacing:.2em}
+:root:not([data-theme="light"]) .chart path[stroke]{filter:drop-shadow(0 0 6px rgba(72,198,255,.7))}
+:root:not([data-theme="light"]) .tip{background:rgba(10,16,30,.92);border-color:rgba(120,170,255,.35)}
+:root:not([data-theme="light"]) .bwarn{background:linear-gradient(90deg,rgba(255,192,77,.16),rgba(255,192,77,.04));border:1px solid rgba(255,192,77,.45);color:#ffe2a8}
+:root:not([data-theme="light"]) .bwarn b,:root:not([data-theme="light"]) .bwarn li{color:#ffd27a}
+.tile.alert{animation:alarm 2s ease-in-out infinite}
+@keyframes alarm{50%{box-shadow:0 0 0 1px rgba(255,77,109,.6),0 0 30px rgba(255,77,109,.35)}}
+#liveBar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:8px 16px;margin:-20px -16px 18px;background:color-mix(in srgb,var(--page) 80%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line);font-size:.8rem;color:var(--ink-2);overflow:hidden}
+#liveBar>span{white-space:nowrap;flex:none}
+#liveBar .dot{width:9px;height:9px;border-radius:50%;background:#2bffa0;animation:pulse 1.6s infinite}
+#liveBar b{color:var(--good-ink);letter-spacing:.15em}
+#liveBar.off .dot{background:var(--warn);animation:none}#liveBar.off b{color:var(--warn)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(43,255,160,.7)}70%{box-shadow:0 0 0 10px rgba(43,255,160,0)}100%{box-shadow:0 0 0 0 rgba(43,255,160,0)}}
+#liveBar .tick{flex:1;min-width:0;display:flex;gap:26px;white-space:nowrap}
+#liveBar .tick.run{animation:tick 30s linear infinite}
+@keyframes tick{from{transform:translateX(20%)}to{transform:translateX(-100%)}}
+#liveBar .ev{color:var(--ink)}#liveBar .ev i{color:var(--series);font-style:normal;margin-right:6px}#liveBar .ev em{color:var(--muted);font-style:normal;margin-left:4px}
+#liveBar .ev.crit i,#liveBar .ev.crit{color:var(--crit)}#liveBar .ev.idle{color:var(--muted)}
+.flash{animation:flash 1.4s ease-out}
+@keyframes flash{0%{color:var(--good);text-shadow:0 0 24px var(--good)}}
+button.glow{border-color:var(--accent);box-shadow:0 0 16px color-mix(in srgb,var(--accent) 60%,transparent)}
+@media (max-width:640px){#liveBar #liveT{display:none}:root:not([data-theme="light"]) .hero .big{font-size:3.2rem}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -726,6 +767,36 @@ function linksSec(){const s=el('section');s.id='quick';s.append(el('h3',null,'Sc
 try{const t=localStorage.getItem('lfa_theme');if(t)document.documentElement.dataset.theme=t}catch(e){}
 let rT;addEventListener('resize',()=>{clearTimeout(rT);rT=setTimeout(()=>{if(ST.o)render()},200)});
 start();
+</script>
+<script>
+/* Live-Ansicht (Variante 1): alle 20 s admin_overview abfragen, nur solange die Seite sichtbar ist. Nur Summen, keine Personendaten. */
+(function(){const LV={prev:null,ev:[],t:null,busy:false,first:true,err:false};
+const MAP=[['users','Neues Konto','Neue Konten'],['posts','Neuer Beitrag','Neue Beiträge'],['comments','Neuer Kommentar','Neue Kommentare'],['likes','Neues Like','Neue Likes'],['follows','Neues Abo','Neue Abos'],['records','Neuer Rekord','Neue Rekorde'],['device_rides','Fahrt von der Uhr','Fahrten von der Uhr'],['events','Neues Event','Neue Events'],['reports_open','Neue Meldung','Neue Meldungen']];
+const TL=[['Heute aktiv','dau'],['Aktiv in 7 Tagen','wau'],['Aktiv in 30 Tagen','mau'],['App-Starts (30 Tage)','opens_30']];
+const nf=n=>typeof fmtN==='function'?fmtN(n):String(n);
+function bar(){const w=document.querySelector('.wrap');if(!w)return null;let b=document.getElementById('liveBar');
+ if(!b){b=document.createElement('div');b.id='liveBar';b.setAttribute('role','status');b.setAttribute('aria-live','polite');b.innerHTML='<span class="dot"></span><b>LIVE</b><span id="liveT">verbinde …</span><div class="tick" id="liveTick"></div>';w.prepend(b)}return b}
+function tag(){const h=document.querySelector('.hero .big');if(h)h.dataset.live='users';
+ document.querySelectorAll('.tile').forEach(t=>{const l=t.querySelector('.lbl'),v=t.querySelector('.val');if(!l||!v)return;const m=TL.find(x=>x[0]===l.textContent.trim());if(m)v.dataset.live=m[1]})}
+function countUp(){document.querySelectorAll('[data-live]').forEach(e=>{const end=+(ST.o||{})[e.dataset.live];if(!isFinite(end)||end<2||matchMedia('(prefers-reduced-motion: reduce)').matches)return;let t0=null;const f=ts=>{t0=t0||ts;const p=Math.min(1,(ts-t0)/1000);e.textContent=nf(Math.round(end*(1-Math.pow(1-p,3))));if(p<1)requestAnimationFrame(f)};requestAnimationFrame(f)})}
+function drawTick(){const k=document.getElementById('liveTick');if(!k)return;
+ k.innerHTML=LV.ev.length?LV.ev.map(e=>'<span class="ev'+(e.c?' crit':'')+'"><i>●</i>'+e.txt+' <em>'+e.at+'</em></span>').join(''):'<span class="ev idle">Warte auf neue Ereignisse …</span>';
+ k.classList.toggle('run',LV.ev.length>2)}
+function stamp(){const s=document.getElementById('liveT');if(!s)return;const b=document.getElementById('liveBar');
+ b.classList.toggle('off',LV.err||document.visibilityState!=='visible');
+ s.textContent=LV.err?'keine Verbindung – versuche erneut':document.visibilityState!=='visible'?'pausiert':'aktualisiert '+new Date().toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
+async function poll(){if(LV.busy||!ST.o||document.visibilityState!=='visible')return;LV.busy=true;
+ try{const o=await rpc('admin_overview');LV.err=false;const p=LV.prev||ST.o;const at=new Date().toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'});
+  for(const[k,one,many]of MAP){const d=(+o[k]||0)-(+p[k]||0);if(d>0)LV.ev.unshift({txt:'+'+nf(d)+' '+(d===1?one:many),at,c:k==='reports_open'})}
+  LV.ev=LV.ev.slice(0,8);LV.prev=o;
+  document.querySelectorAll('[data-live]').forEach(e=>{const v=nf(o[e.dataset.live]);if(e.textContent!==v){e.textContent=v;e.classList.remove('flash');void e.offsetWidth;e.classList.add('flash')}});
+  ST.o=Object.assign(ST.o||{},o);if((+o.reports_open||0)!==(+p.reports_open||0)){const r=[...document.querySelectorAll('header.top button')].find(b=>b.textContent==='Aktualisieren');if(r)r.classList.add('glow')}
+  drawTick()}catch(e){LV.err=true}finally{LV.busy=false;stamp()}}
+const _render=render;render=function(){_render.apply(this,arguments);if(!ST.o)return;bar();tag();drawTick();stamp();LV.prev=ST.o;
+ if(LV.first){LV.first=false;countUp()}const r=[...document.querySelectorAll('header.top button')].find(b=>b.textContent==='Aktualisieren');if(r)r.classList.remove('glow');
+ if(!LV.t)LV.t=setInterval(poll,20000)};
+document.addEventListener('visibilitychange',()=>{stamp();if(document.visibilityState==='visible')poll()});
+})();
 </script>
 </body>
 </html>
