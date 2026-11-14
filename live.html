@@ -104,7 +104,7 @@ function render(j){var nm=(j&&j.name)||TX.rider;
   $('lvTitle').textContent=f(TX.on,nm);
   $('lvSub').textContent=[TX.mode[j.mode]||'',f(TX.since,hm(j.started_at)),f(TX.last,TX.ago(age))].filter(Boolean).join(' · ');
   $('lvOld').hidden=!old;if(old)$('lvOld').textContent=f(TX.noNet,Math.round(age/60));
-  var st=j.still_since&&!old?Math.max(2,Math.round((now-Date.parse(j.still_since))/60000)):0;$('lvStill').hidden=!st;if(st)$('lvStill').textContent='⏸ '+f(TX.still,st);
+  var st=j.still_since&&!old?Math.max(2,Math.round((now-Date.parse(j.still_since))/60000)):0;$('lvStill').hidden=!st;if(st){$('lvStill').innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;vertical-align:-3px;margin-right:6px"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></svg>';$('lvStill').append(document.createTextNode(f(TX.still,st)))}
   move(j.lat,j.lon,old)}
 function tick(){if(!key){render(null);return}
   fetch(SB+'/rest/v1/rpc/live_view',{method:'POST',headers:{'apikey':KEY,'Content-Type':'application/json'},body:JSON.stringify({p_key:key}),cache:'no-store',referrerPolicy:'no-referrer'})
