@@ -12,7 +12,7 @@
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.9.0/dist/maplibre-gl.css">
 <style>
 :root{color-scheme:light;--page:#F2F3EF;--card:#fff;--ink:#121418;--ink2:#5C636B;--line:#E3E4DF;--accent:#1E50FF}
 @media (prefers-color-scheme:dark){:root{color-scheme:dark;--page:#0E0F11;--card:#17191D;--ink:#F0F1F2;--ink2:#B9BDC3;--line:#2A2D33;--accent:#5B7FFF}}
@@ -22,7 +22,7 @@ main{max-width:560px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) 16
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.3rem;margin-bottom:14px}
 .brand small{margin-left:auto;font-size:.8rem;font-weight:600;color:var(--ink2)}
 .logo{width:34px;height:34px;border-radius:9px;background:#1E50FF;display:grid;place-items:center;overflow:hidden}.logo svg{width:100%;height:100%}
-#map{height:58vh;min-height:300px;border-radius:20px;overflow:hidden;background:#E8EAE3;border:1px solid var(--line)}
+#map{height:58vh;min-height:300px;border-radius:20px;overflow:hidden;background:#f6f5f1;border:1px solid var(--line)}.maplibregl-ctrl-attrib{font-size:10px}
 h1{font-size:1.5rem;margin:16px 0 2px;line-height:1.2}
 .sub{color:var(--ink2);margin:0}
 .warn{margin-top:12px;border-radius:14px;padding:10px 12px;font-weight:700;background:#FFF4E5;color:#9A5B00}
@@ -52,7 +52,10 @@ h1{font-size:1.5rem;margin:16px 0 2px;line-height:1.2}
 <div class="off" id="lvOld" hidden></div>
 <p class="note" id="lvNote"></p></section>
 </main>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.9.0/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pmtiles@4.5.0/dist/pmtiles.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/maplibre-contour@0.1.1/dist/index.min.js"></script>
+<script src="lfmap/lfstyle.js"></script>
 <script>
 (function(){
 var SB='https://pgkkbzozlufbzcdtkbrb.supabase.co',KEY='sb_publishable_oizBlM6hGJoDkOjSbtd9Aw_ydfWCJRb';
@@ -65,19 +68,38 @@ function $(i){return document.getElementById(i)}
 $('lvNote').textContent=TX.note;$('map').setAttribute('aria-label',TX.map);
 var key=(location.hash||'').replace(/^#/,'');
 var map=null,mk=null,an=null,skew=0,last=null,tm=0;
-function initMap(){if(map||!window.L)return;map=L.map('map',{zoomControl:true,attributionControl:true}).setView([47.5,13.5],5);
-  L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17,subdomains:'abc',attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)'}).addTo(map)}
-function move(lat,lon,old){initMap();if(!map)return;setTimeout(function(){map.invalidateSize()},0);var ic=L.divIcon({className:'',html:'<div class="dot'+(old?' old':'')+'"></div>',iconSize:[20,20],iconAnchor:[10,10]});
-  if(!mk){mk=L.marker([lat,lon],{icon:ic,keyboard:false}).addTo(map);map.setView([lat,lon],15);return}
-  mk.setIcon(ic);var c=mk.getLatLng(),d=map.distance(c,[lat,lon]);if(d<0.5)return;
-  if(d>3000||matchMedia('(prefers-reduced-motion: reduce)').matches){mk.setLatLng([lat,lon]);map.panTo([lat,lon]);return}
-  var t0=performance.now(),dur=9500,a=[c.lat,c.lng],b=[lat,lon];an&&cancelAnimationFrame(an);
-  (function st(t){var k=Math.min(1,(t-t0)/dur);var p=[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k];mk.setLatLng(p);if(!map.getBounds().pad(-0.2).contains(p))map.panTo(p,{animate:true});if(k<1)an=requestAnimationFrame(st)})(t0)}
+// Karte „Linefact Outdoor“ wie in der App: OSM-Daten (Protomaps) von Cloudflare R2, Höhen (Schummerung + Höhenlinien) von AWS Terrain Tiles
+var PM='https://maps.linefact-maps.com/world.pmtiles',DEM='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+var ATT='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · '+(EN?'Elevation':'Höhen')+': <a href="https://registry.opendata.aws/terrain-tiles/">Terrain Tiles</a>';
+var starting=false;
+function initMap(){if(map||starting||!window.maplibregl||!window.pmtiles||!window.lfOffStyle)return;starting=true;
+  try{var proto=new pmtiles.Protocol();maplibregl.addProtocol('pmtiles',proto.tile)}catch(e){}
+  var cont=null;try{if(window.mlcontour){var ds=new mlcontour.DemSource({url:DEM,encoding:'terrarium',maxzoom:12,worker:false});ds.setupMaplibre(maplibregl);
+    cont=ds.contourProtocolUrl({thresholds:{11:[100,500],12:[50,250],13:[20,100],14:[20,100],15:[10,50]},contourLayer:'contours',elevationKey:'ele',levelKey:'level',extent:4096,buffer:1})}}catch(e){cont=null}
+  fetch('lfmap/layers-light.json',{cache:'force-cache'}).then(function(r){return r.json()}).then(function(base){
+    if(EN)base=JSON.parse(JSON.stringify(base).split('name:de').join('name:en'));
+    var here=location.href.replace(/[#?].*$/,'').replace(/[^\/]*$/,'');
+    var st=lfOffStyle(base,{dark:false,glyphs:'https://maps.linefact-maps.com/fonts/{fontstack}/{range}.pbf',sprite:here+'lfmap/sprites/light',pm:'pmtiles://'+PM,dem:DEM,contourUrl:cont});
+    map=new maplibregl.Map({container:'map',style:st,center:[13.5,47.5],zoom:5,maxZoom:17.5,attributionControl:false,dragRotate:false,pitchWithRotate:false});
+    map.touchZoomRotate.disableRotation();map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    map.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:ATT}),'bottom-right');
+    if(last&&last.active)move(last.lat,last.lon,false)}).catch(function(){starting=false})}
+function mapFail(lat,lon){var m=$('map');if(!m||m.dataset.fail)return;m.dataset.fail=1;m.innerHTML='';m.style.display='flex';m.style.alignItems='center';m.style.justifyContent='center';m.style.flexDirection='column';m.style.gap='8px';m.style.padding='16px';m.style.textAlign='center';
+  var t=document.createElement('div');t.textContent=EN?'The map could not be loaded.':'Die Karte konnte nicht geladen werden.';m.append(t);var l=document.createElement('a');l.id='lvOsm';l.target='_blank';l.rel='noopener';l.textContent=EN?'Open location in OpenStreetMap':'Standort in OpenStreetMap öffnen';m.append(l);osmLink(lat,lon)}
+function osmLink(lat,lon){var l=$('lvOsm');if(l&&isFinite(lat))l.href='https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lon+'#map=16/'+lat+'/'+lon}
+function dotEl(old){var d=document.createElement('div');d.className='dot'+(old?' old':'');return d}
+function move(lat,lon,old){if(!window.maplibregl||!window.pmtiles||!window.lfOffStyle){mapFail(lat,lon);osmLink(lat,lon);return}initMap();if(!map)return;
+  if(!mk){mk=new maplibregl.Marker({element:dotEl(old)}).setLngLat([lon,lat]).addTo(map);map.jumpTo({center:[lon,lat],zoom:15});return}
+  mk.getElement().className='dot'+(old?' old':'');var c=mk.getLngLat(),dy=(lat-c.lat)*111320,dx=(lon-c.lng)*111320*Math.cos(lat*Math.PI/180),d=Math.sqrt(dx*dx+dy*dy);if(d<0.5)return;
+  if(d>3000||matchMedia('(prefers-reduced-motion: reduce)').matches){mk.setLngLat([lon,lat]);map.panTo([lon,lat]);return}
+  var t0=performance.now(),dur=9500,a=[c.lng,c.lat],b=[lon,lat];an&&cancelAnimationFrame(an);
+  (function st(t){var k=Math.min(1,(t-t0)/dur);var p=[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k];mk.setLngLat(p);var bb=map.getBounds();var w=bb.getEast()-bb.getWest(),h=bb.getNorth()-bb.getSouth();
+    if(p[0]<bb.getWest()+w*.2||p[0]>bb.getEast()-w*.2||p[1]<bb.getSouth()+h*.2||p[1]>bb.getNorth()-h*.2)map.easeTo({center:p,duration:600});if(k<1)an=requestAnimationFrame(st)})(t0)}
 function hm(iso){try{return new Date(iso).toLocaleTimeString(EN?'en-GB':'de-AT',{hour:'2-digit',minute:'2-digit'})}catch(e){return''}}
 function render(j){var nm=(j&&j.name)||TX.rider;
   if(!j||!j.ok){$('lvTitle').textContent=TX.bad;$('lvSub').textContent=TX.badNote;$('lvStill').hidden=$('lvOld').hidden=true;return}
   var now=Date.parse(j.now)||Date.now();skew=Date.now()-now;
-  if(!j.active){$('lvTitle').textContent=f(TX.off,nm);$('lvSub').textContent=TX.offNote;$('lvStill').hidden=$('lvOld').hidden=true;if(mk){map.removeLayer(mk);mk=null}return}
+  if(!j.active){last=null;$('lvTitle').textContent=f(TX.off,nm);$('lvSub').textContent=TX.offNote;$('lvStill').hidden=$('lvOld').hidden=true;if(mk){mk.remove();mk=null}return}
   last=j;var age=Math.max(0,Math.round((now-Date.parse(j.at))/1000));var old=age>120;
   $('lvTitle').textContent=f(TX.on,nm);
   $('lvSub').textContent=[TX.mode[j.mode]||'',f(TX.since,hm(j.started_at)),f(TX.last,TX.ago(age))].filter(Boolean).join(' · ');
