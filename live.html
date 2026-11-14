@@ -31,18 +31,26 @@ h1{font-size:1.5rem;margin:16px 0 2px;line-height:1.2}
 .dot{width:20px;height:20px;border-radius:50%;background:#1E50FF;border:3px solid #fff;box-shadow:0 0 0 8px rgba(30,80,255,.18),0 1px 4px rgba(0,0,0,.3)}
 .dot.old{background:#8A929C;box-shadow:0 0 0 8px rgba(138,146,156,.2)}
 [hidden]{display:none!important}
+.brand b{color:var(--accent)}
+@media (min-width:900px){
+  main{max-width:1240px;display:grid;grid-template-columns:minmax(0,1fr) 360px;grid-template-rows:auto 1fr;gap:0 28px;height:100vh;padding:24px 32px}
+  .brand{grid-column:1/-1}
+  #map{grid-row:2;height:auto;min-height:0}
+  .info{grid-row:2;grid-column:2;align-self:start;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px}
+  .info h1{margin-top:0}
+}
 </style>
 </head>
 <body>
 <main>
 <div class="brand"><span class="logo"><svg viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="2.2"><path d="M50 16 C71 14 86 30 84 51 C82 72 65 86 46 84 C25 82 14 65 18 46 C21 29 33 17 50 16 Z" stroke-opacity=".18"/><path d="M50 29 C64 28 73 38 72 51 C71 63 61 72 48 71 C35 70 28 61 30 48 C32 37 40 30 50 29 Z" stroke-opacity=".27"/><path d="M50 41 C56 41 60 45 60 50 C60 56 55 60 49 59 C44 58 41 54 42 49 C43 44 46 41 50 41 Z" stroke-opacity=".38"/></g><path d="M21 79 79 21" stroke="#fff" stroke-width="8.5" stroke-linecap="round"/><circle cx="50" cy="50" r="5.4" fill="#121418"/></svg></span>
-Linefact<small id="lvTag">Live</small></div>
+<span>Linefact<b>.</b></span><small id="lvTag">Live</small></div>
 <div id="map" role="img" aria-label="Karte"></div>
-<h1 id="lvTitle">…</h1>
+<section class="info"><h1 id="lvTitle">…</h1>
 <p class="sub" id="lvSub"></p>
 <div class="warn" id="lvStill" hidden></div>
 <div class="off" id="lvOld" hidden></div>
-<p class="note" id="lvNote"></p>
+<p class="note" id="lvNote"></p></section>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
@@ -59,7 +67,7 @@ var key=(location.hash||'').replace(/^#/,'');
 var map=null,mk=null,an=null,skew=0,last=null,tm=0;
 function initMap(){if(map||!window.L)return;map=L.map('map',{zoomControl:true,attributionControl:true}).setView([47.5,13.5],5);
   L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17,subdomains:'abc',attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)'}).addTo(map)}
-function move(lat,lon,old){initMap();if(!map)return;var ic=L.divIcon({className:'',html:'<div class="dot'+(old?' old':'')+'"></div>',iconSize:[20,20],iconAnchor:[10,10]});
+function move(lat,lon,old){initMap();if(!map)return;setTimeout(function(){map.invalidateSize()},0);var ic=L.divIcon({className:'',html:'<div class="dot'+(old?' old':'')+'"></div>',iconSize:[20,20],iconAnchor:[10,10]});
   if(!mk){mk=L.marker([lat,lon],{icon:ic,keyboard:false}).addTo(map);map.setView([lat,lon],15);return}
   mk.setIcon(ic);var c=mk.getLatLng(),d=map.distance(c,[lat,lon]);if(d<0.5)return;
   if(d>3000||matchMedia('(prefers-reduced-motion: reduce)').matches){mk.setLatLng([lat,lon]);map.panTo([lat,lon]);return}
