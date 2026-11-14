@@ -282,6 +282,7 @@ function showMfa(msg){const a=$('#app');a.innerHTML='';const w=el('div','login')
     catch(x){f.querySelector('#le').textContent=/invalid|code/i.test(x.message)?'Der Code stimmt nicht (oder ist abgelaufen). Nimm den aktuellen Code.':x.message;b.disabled=false;inp.select()}}}
 async function loadAll(){const m=$('#main');if(m)m.classList.add('loading');
   try{const[o,d,u,r,c,an,ch,ab,mu,se]=await Promise.all([rpc('admin_overview'),rpc('admin_daily',{p_days:ST.days}),rpc('admin_users',{p_query:ST.q,p_limit:200}),rpc('admin_reports',{p_all:ST.allRep}),rpc('admin_clubs'),rpc('get_announcements',{p_limit:20}).catch(()=>[]),rpc('admin_challenges').catch(()=>null),rpc('admin_abo_state').catch(()=>null),rpc('admin_map_usage',{p_days:62}).catch(()=>null),rpc('admin_settings').catch(()=>null)]);
+    try{ST.live=await rpc('admin_live_stats')}catch(e){ST.live=e&&e.code==='PGRST202'?'old':null}
     try{ST.del=await rpc('admin_deletions')}catch(e){ST.del=null}
     try{ST.offu=new Set(((await rpc('official_users'))||[]).map(x=>x.id))}catch(e){ST.offu=new Set()}
     ST.o=o;ST.d=d||[];ST.users=u||[];ST.reports=r||[];ST.clubs=c||[];ST.ann=an||[];ST.chal=ch;ST.abo=ab;ST.map=mu;ST.set=se;ST.err='';ST.at=new Date()}
@@ -324,7 +325,7 @@ function render(){const m=$('#main');if(!m)return;m.innerHTML='';$('#stamp').tex
   const MN={mx:'Motocross',enduro:'Enduro',race:'Enduro Race',post:'Beiträge'};
   g3.append(hbarCard('Geteilt nach Art','alle Zeit',Object.entries(o.modes||{}).map(([k,v])=>[MN[k]||k,v]).sort((a,b)=>b[1]-a[1])),
     hbarCard('App-Versionen','Nutzer je Version, letzte 30 Tage',(o.versions||[]).map(x=>[x.version,x.users])),storageCard(o));s2.append(g3);m.append(s2);
-  m.append(mapSec());
+  m.append(mapSec());m.append(liveSec());
   // Meldungen
   m.append(annSec());m.append(promoSec());m.append(welSec());m.append(chalSec());
   m.append(reportsSec());
@@ -351,6 +352,7 @@ function briefCard(){const o=ST.o||{},D=ST.d||[],c=el('div','card brief');c.appe
   if(o.reports_open)W.push('<b>'+o.reports_open+' offene Meldung'+(o.reports_open===1?'':'en')+'</b> – bitte unter „Meldungen“ prüfen (DSA: rasch bearbeiten).');
   const dbp=o.db_bytes?o.db_bytes/500e6*100:0,stp=o.storage_bytes?o.storage_bytes/1e9*100:0;(dbp>70?W:L).push('Speicher: Datenbank <b>'+Math.round(dbp)+' %</b>, Fotos <b>'+Math.round(stp)+' %</b> der Gratis-Grenze'+(dbp>70||stp>70?' – bald aufräumen oder Plan wechseln.':''));if(stp>70&&dbp<=70)W.push('Foto-Speicher über 70 %.');
   if(Array.isArray(ST.map)){const ym=new Date().toISOString().slice(0,7);let mt=0;ST.map.forEach(x=>{if(String(x.day).slice(0,7)===ym)mt+=(+x.tiles||0)+(+x.statics||0)});L.push('Karten (Mapbox) diesen Monat: <b>'+fmtN(mt)+'</b> Abrufe');}
+  if(ST.live&&typeof ST.live==='object'){const v=ST.live;L.push('Live-Standort: <b>'+fmtN(v.live_now)+'</b> gerade live (Live-Link) · <b>'+fmtN(v.group_now)+'</b> in Gruppenfahrten · '+fmtN(v.group_today)+' Gruppenfahrten heute')}
   const V=o.versions||[];if(V.length){const tot=V.reduce((s,x)=>s+x.users,0),top=V.slice().sort((a,b)=>String(b.version).localeCompare(String(a.version),undefined,{numeric:true}))[0];L.push('Neueste App-Version '+top.version+': <b>'+Math.round(top.users/Math.max(1,tot)*100)+' %</b> der aktiven Nutzer');}
   L.push('Push: '+fmtN(o.push_devices)+' Geräte · '+fmtN(o.push_sent)+' Mitteilungen in 24 h · Uhren: '+fmtN(o.devices)+' gekoppelt');
   if(o.schema&&o.schema!=='1.0.58')W.push('Datenbank-Stand '+o.schema+' – die neue SQL-Datei 1.0.58 ist noch nicht eingespielt.');
@@ -650,6 +652,16 @@ function chalSec(){const s=el('section');s.append(el('h3',null,'Challenges für 
   s.append(c);return s}
 
 // ---------- Schnellzugriff ----------
+// ---------- 1.1: Live-Standort (nur Summen, keine Personen, keine Orte) ----------
+function liveSec(){const s=el('section');s.append(el('h3',null,'Live-Standort'));
+  if(ST.live==='old'||ST.live==null){const c=el('div','card');c.append(el('p','empty',ST.live==='old'?'Noch keine Zahlen – bitte sql-gruppenfahrt-einstellungen-1.1.sql in Supabase ausführen.':'Zahlen gerade nicht verfügbar.'));s.append(c);return s}
+  const v=ST.live,g=el('div','grid');
+  g.append(tile('Gerade live (Live-Link)',+v.live_now||0,'Standort in den letzten 2 Min.'),tile('Live-Link eingeschaltet',+v.links_on||0,'Konten mit aktivem Link'),
+    tile('In Gruppenfahrten unterwegs',+v.group_now||0,'teilen gerade'),tile('Gruppenfahrten heute',+v.group_today||0,'offen: '+fmtN(+v.group_open||0)+' · 30 Tage: '+fmtN(+v.group_30d||0)));
+  s.append(g);
+  const n=(+v.live_now||0)+(+v.group_now||0);const c=el('div','card');
+  c.append(el('h2',null,'Supabase-Last'),el('p','sub','Jede fahrende Person mit Live-Link oder Gruppenfahrt meldet sich alle 10 Sekunden (360 Aufrufe pro Stunde), jede offene Live-Seite fragt ebenfalls alle 10 Sekunden nach. Pro Person wird nur eine Zeile überschrieben – die Datenbank wächst dadurch nicht. Gerade: ca. '+fmtN(n*360)+' Aufrufe pro Stunde (ohne Betrachter). Den Datenverkehr siehst du im Supabase-Dashboard unter Usage › Egress.'));
+  s.append(c);return s}
 // ---------- Karten (Mapbox) ----------
 function mapSec(){const s=el('section');s.append(el('h3',null,'Karten (Mapbox)'));
   if(ST.map==null){const c=el('div','card');c.append(el('p','empty','Noch keine Zahlen – erst ab App-Version 1.0.56 (die SQL-Datei 1.0.56 muss in Supabase laufen).'));s.append(c);return s}
