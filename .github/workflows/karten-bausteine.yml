@@ -1,0 +1,56 @@
+# Linefact: Kartenbausteine für linefact.at/live selbst hosten (statt jsDelivr) – Josef 14.11.2026
+# Läuft automatisch einmal, wenn diese Datei auf main kommt, und danach nur per Knopf (Actions › „Kartenbausteine selbst hosten“ › Run workflow).
+# Lädt MapLibre, PMTiles und maplibre-contour in fester Version von npm, legt sie unter lfmap/vendor/ ab
+# und stellt live.html auf diese Dateien um. Danach lädt die Live-Seite nichts mehr von jsDelivr.
+name: Kartenbausteine selbst hosten
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/karten-bausteine.yml']
+permissions:
+  contents: write
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Dateien von npm laden
+        run: |
+          set -euo pipefail
+          T=$(mktemp -d)
+          (cd "$T" && npm pack maplibre-gl@5.9.0 pmtiles@4.5.0 maplibre-contour@0.1.1 --silent)
+          mkdir -p "$T/a" "$T/b" "$T/c" lfmap/vendor
+          tar -xzf "$T/maplibre-gl-5.9.0.tgz" -C "$T/a"
+          tar -xzf "$T/pmtiles-4.5.0.tgz" -C "$T/b"
+          tar -xzf "$T/maplibre-contour-0.1.1.tgz" -C "$T/c"
+          cp "$T/a/package/dist/maplibre-gl.js" lfmap/vendor/maplibre-gl-5.9.0.js
+          cp "$T/a/package/dist/maplibre-gl.css" lfmap/vendor/maplibre-gl-5.9.0.css
+          cp "$T/b/package/dist/pmtiles.js" lfmap/vendor/pmtiles-4.5.0.js
+          cp "$T/c/package/dist/index.min.js" lfmap/vendor/maplibre-contour-0.1.1.js
+          # Quellcode-Verweise entfernen (sonst sucht der Browser .map-Dateien)
+          sed -i '/sourceMappingURL=/d' lfmap/vendor/*.js lfmap/vendor/*.css
+          { echo "Fremde Bausteine für linefact.at/live (unverändert, nur Quellverweise entfernt):"; echo;
+            for d in a b c; do n=$(node -p "require('$T/$d/package/package.json').name+' '+require('$T/$d/package/package.json').version+' – Lizenz: '+require('$T/$d/package/package.json').license"); echo "== $n =="; cat "$T/$d"/package/LICENSE* 2>/dev/null || true; echo; done; } > lfmap/vendor/LIZENZEN.txt
+          for f in lfmap/vendor/*.js lfmap/vendor/*.css; do test -s "$f"; done
+          ls -la lfmap/vendor
+      - name: live.html umstellen
+        run: |
+          set -euo pipefail
+          sed -i \
+            -e 's#https://cdn.jsdelivr.net/npm/maplibre-gl@5.9.0/dist/maplibre-gl.css#/lfmap/vendor/maplibre-gl-5.9.0.css#' \
+            -e 's#https://cdn.jsdelivr.net/npm/maplibre-gl@5.9.0/dist/maplibre-gl.js#/lfmap/vendor/maplibre-gl-5.9.0.js#' \
+            -e 's#https://cdn.jsdelivr.net/npm/pmtiles@4.5.0/dist/pmtiles.js#/lfmap/vendor/pmtiles-4.5.0.js#' \
+            -e 's#https://cdn.jsdelivr.net/npm/maplibre-contour@0.1.1/dist/index.min.js#/lfmap/vendor/maplibre-contour-0.1.1.js#' live.html
+          if grep -q jsdelivr live.html; then echo "jsdelivr noch in live.html"; exit 1; fi
+      - name: Speichern
+        run: |
+          git config user.name "linefact-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lfmap/vendor live.html
+          git diff --cached --quiet && { echo "Nichts zu tun"; exit 0; }
+          git commit -m "Live-Seite: Kartenbausteine selbst gehostet (kein jsDelivr mehr)"
+          git push
