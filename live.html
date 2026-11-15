@@ -2,6 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://maps.linefact-maps.com https://s3.amazonaws.com; connect-src 'self' https://pgkkbzozlufbzcdtkbrb.supabase.co https://maps.linefact-maps.com https://s3.amazonaws.com; worker-src 'self' blob:; child-src blob:; font-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
@@ -27,7 +28,7 @@ h1{font-size:1.5rem;margin:16px 0 2px;line-height:1.2}
 .sub{color:var(--ink2);margin:0}
 .warn{margin-top:12px;border-radius:14px;padding:10px 12px;font-weight:700;background:#FFF4E5;color:#9A5B00}
 .off{margin-top:12px;border-radius:14px;padding:10px 12px;font-weight:600;background:rgba(127,127,127,.12);color:var(--ink2)}
-.note{color:var(--ink2);font-size:.86rem;margin-top:14px}
+.note{color:var(--ink2);font-size:.86rem;margin-top:14px}.lvfoot a{color:var(--ink2)}
 .stat{margin:14px 0 0;padding:4px 14px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
 .stat div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line)}.stat div:first-child{border-top:0}
 .stat dt{color:var(--ink2);margin:0}.stat dd{margin:0;font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
@@ -62,7 +63,8 @@ h1{font-size:1.5rem;margin:16px 0 2px;line-height:1.2}
 <div id="lsModeR" hidden><dt id="lsL4"></dt><dd id="lsMode"></dd></div>
 <div><dt id="lsL5"></dt><dd id="lsChk">…</dd></div>
 </dl>
-<p class="note" id="lvNote"></p></section>
+<p class="note" id="lvNote"></p>
+<p class="note lvfoot"><a id="lvPriv" href="/#datenschutz">Datenschutz</a> · <a id="lvImp" href="/#impressum">Impressum</a></p></section>
 </main>
 <script src="/lfmap/vendor/maplibre-gl-5.9.0.js"></script>
 <script src="/lfmap/vendor/pmtiles-4.5.0.js"></script>
@@ -77,7 +79,7 @@ var TX=EN?{rider:'Rider',on:'{0} is riding',off:'{0} is not riding right now',of
 if(EN)document.documentElement.lang='en';
 function f(s,a){return s.replace('{0}',a)}
 function $(i){return document.getElementById(i)}
-$('lvNote').textContent=TX.note;$('lsL1').textContent=TX.lS;$('lsL2').textContent=TX.lSent;$('lsL3').textContent=TX.lSince;$('lsL4').textContent=TX.lMode;$('lsL5').textContent=TX.lChk;$('map').setAttribute('aria-label',TX.map);
+$('lvNote').textContent=TX.note;if(EN){$('lvPriv').textContent='Privacy';$('lvPriv').href='/#privacy';$('lvImp').textContent='Legal notice';$('lvImp').href='/#legal-notice'}$('lsL1').textContent=TX.lS;$('lsL2').textContent=TX.lSent;$('lsL3').textContent=TX.lSince;$('lsL4').textContent=TX.lMode;$('lsL5').textContent=TX.lChk;$('map').setAttribute('aria-label',TX.map);
 var key=(location.hash||'').replace(/^#/,'');if(!key){var mm=location.href.match(/(?:%23|[?&]k=)([A-Za-z0-9_-]{20,64})/);if(mm)key=mm[1]}key=key.replace(/[^A-Za-z0-9_-].*$/,'');
 var map=null,mk=null,an=null,skew=0,last=null,tm=0;
 // Karte „Linefact Outdoor“ wie in der App: OSM-Daten (Protomaps) von Cloudflare R2, Höhen (Schummerung + Höhenlinien) von AWS Terrain Tiles

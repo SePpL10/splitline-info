@@ -2,6 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://pgkkbzozlufbzcdtkbrb.supabase.co; media-src 'self' blob: https://pgkkbzozlufbzcdtkbrb.supabase.co; connect-src 'self' https://pgkkbzozlufbzcdtkbrb.supabase.co wss://pgkkbzozlufbzcdtkbrb.supabase.co; font-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Linefact Admin</title>
@@ -353,7 +354,7 @@ function briefCard(){const o=ST.o||{},D=ST.d||[],c=el('div','card brief');c.appe
   const dbp=o.db_bytes?o.db_bytes/500e6*100:0,stp=o.storage_bytes?o.storage_bytes/1e9*100:0;(dbp>70?W:L).push('Speicher: Datenbank <b>'+Math.round(dbp)+' %</b>, Fotos <b>'+Math.round(stp)+' %</b> der Gratis-Grenze'+(dbp>70||stp>70?' – bald aufräumen oder Plan wechseln.':''));if(stp>70&&dbp<=70)W.push('Foto-Speicher über 70 %.');
   if(Array.isArray(ST.map)){const ym=new Date().toISOString().slice(0,7);let mt=0;ST.map.forEach(x=>{if(String(x.day).slice(0,7)===ym)mt+=(+x.tiles||0)+(+x.statics||0)});L.push('Karten (Mapbox) diesen Monat: <b>'+fmtN(mt)+'</b> Abrufe');}
   if(ST.live&&typeof ST.live==='object'){const v=ST.live;L.push('Live-Standort: <b>'+fmtN(v.live_now)+'</b> gerade live (Live-Link) · <b>'+fmtN(v.group_now)+'</b> in Gruppenfahrten · '+fmtN(v.group_today)+' Gruppenfahrten heute')}
-  const V=o.versions||[];if(V.length){const tot=V.reduce((s,x)=>s+x.users,0),top=V.slice().sort((a,b)=>String(b.version).localeCompare(String(a.version),undefined,{numeric:true}))[0];L.push('Neueste App-Version '+top.version+': <b>'+Math.round(top.users/Math.max(1,tot)*100)+' %</b> der aktiven Nutzer');}
+  const V=o.versions||[];if(V.length){const tot=V.reduce((s,x)=>s+x.users,0),top=V.slice().sort((a,b)=>String(b.version).localeCompare(String(a.version),undefined,{numeric:true}))[0];L.push('Neueste App-Version '+String(top.version).replace(/[^0-9A-Za-z .()_-]/g,'')+': <b>'+Math.round(top.users/Math.max(1,tot)*100)+' %</b> der aktiven Nutzer');}
   L.push('Push: '+fmtN(o.push_devices)+' Geräte · '+fmtN(o.push_sent)+' Mitteilungen in 24 h · Uhren: '+fmtN(o.devices)+' gekoppelt');
   if(o.schema&&o.schema!=='1.0.58')W.push('Datenbank-Stand '+o.schema+' – die neue SQL-Datei 1.0.58 ist noch nicht eingespielt.');
   if(W.length){const w=el('div','bwarn');w.innerHTML='<b>Zu tun</b><ul>'+W.map(x=>'<li>'+x+'</li>').join('')+'</ul>';c.append(w)}else c.append(el('p','bok','✓ Alles in Ordnung – nichts Dringendes.'));
