@@ -37,8 +37,8 @@ button:disabled{opacity:.6}
 <div class="brand"><span>Linefact</span></div>
 <div class="card">
 <h1 id="h">E-Mail bestätigt ✓</h1>
-<p id="t">Deine E-Mail-Adresse ist bestätigt. Öffne jetzt Linefact und melde dich mit deiner E-Mail und deinem Passwort an.</p>
-<a class="btn" id="b" href="linefact://">In Linefact öffnen</a>
+<p id="t">Deine E-Mail-Adresse ist bestätigt. Linefact öffnet sich gleich – falls nicht, tippe auf den Knopf.</p>
+<a class="btn" id="b" href="linefact://bestaetigt">In Linefact öffnen</a>
 </div>
 </main>
 <script>
@@ -46,10 +46,12 @@ button:disabled{opacity:.6}
 var bad=q.get('error')||q.get('error_code');var h=document.getElementById('h'),t=document.getElementById('t'),b=document.getElementById('b');
 if(bad){document.documentElement.lang=en?'en':'de';h.textContent=en?'Link no longer valid':'Link nicht mehr gültig';h.className='err';
   t.textContent=en?'This confirmation link has expired or was already used. Open Linefact, enter your email under Sign in and tap “Resend confirmation email”.':'Dieser Bestätigungs-Link ist abgelaufen oder wurde schon benutzt. Öffne Linefact, gib unter „Anmelden“ deine E-Mail ein und tippe auf „Bestätigungs-E-Mail nochmal senden“.';}
-else if(en){document.documentElement.lang='en';h.textContent='Email confirmed ✓';t.textContent='Your email address is confirmed. Now open Linefact and sign in with your email and password.';}
+else if(en){document.documentElement.lang='en';h.textContent='Email confirmed ✓';t.textContent='Your email address is confirmed. Linefact opens in a moment – if not, tap the button.';}
 if(en)b.textContent='Open Linefact';
 // Anmeldedaten aus dem Link nicht in der Adresszeile lassen
-if(location.hash)history.replaceState(null,'',location.pathname);})();
+if(location.hash)history.replaceState(null,'',location.pathname);
+// 1.1 (Josef 15.11.): direkt zurück in die App (am Computer passiert einfach nichts)
+if(!bad&&/iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)&&'ontouchend' in document)setTimeout(function(){location.href='linefact://bestaetigt'},600);})();
 </script>
 </body>
 </html>
