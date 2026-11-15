@@ -28,6 +28,11 @@ h1{font-size:1.5rem;margin:16px 0 2px;line-height:1.2}
 .warn{margin-top:12px;border-radius:14px;padding:10px 12px;font-weight:700;background:#FFF4E5;color:#9A5B00}
 .off{margin-top:12px;border-radius:14px;padding:10px 12px;font-weight:600;background:rgba(127,127,127,.12);color:var(--ink2)}
 .note{color:var(--ink2);font-size:.86rem;margin-top:14px}
+.stat{margin:14px 0 0;padding:4px 14px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.stat div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line)}.stat div:first-child{border-top:0}
+.stat dt{color:var(--ink2);margin:0}.stat dd{margin:0;font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.sd{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px;background:#8A929C}.sd.ok{background:#16A34A;box-shadow:0 0 0 4px rgba(22,163,74,.18)}.sd.st{background:#E08A00}.sd.no{background:#8A929C}
+@media (min-width:900px){.info .stat{background:transparent;border:0;padding:0}}
 .dot{width:20px;height:20px;border-radius:50%;background:#1E50FF;border:3px solid #fff;box-shadow:0 0 0 8px rgba(30,80,255,.18),0 1px 4px rgba(0,0,0,.3)}
 .dot.old{background:#8A929C;box-shadow:0 0 0 8px rgba(138,146,156,.2)}
 [hidden]{display:none!important}
@@ -50,6 +55,13 @@ h1{font-size:1.5rem;margin:16px 0 2px;line-height:1.2}
 <p class="sub" id="lvSub"></p>
 <div class="warn" id="lvStill" hidden></div>
 <div class="off" id="lvOld" hidden></div>
+<dl class="stat" id="lvStat">
+<div><dt id="lsL1"></dt><dd id="lsStatus">…</dd></div>
+<div id="lsSentR" hidden><dt id="lsL2"></dt><dd id="lsSent"></dd></div>
+<div id="lsSinceR" hidden><dt id="lsL3"></dt><dd id="lsSince"></dd></div>
+<div id="lsModeR" hidden><dt id="lsL4"></dt><dd id="lsMode"></dd></div>
+<div><dt id="lsL5"></dt><dd id="lsChk">…</dd></div>
+</dl>
 <p class="note" id="lvNote"></p></section>
 </main>
 <script src="/lfmap/vendor/maplibre-gl-5.9.0.js"></script>
@@ -60,13 +72,13 @@ h1{font-size:1.5rem;margin:16px 0 2px;line-height:1.2}
 (function(){
 var SB='https://pgkkbzozlufbzcdtkbrb.supabase.co',KEY='sb_publishable_oizBlM6hGJoDkOjSbtd9Aw_ydfWCJRb';
 var EN=!/^de/i.test(navigator.language||'de');
-var TX=EN?{rider:'Rider',on:'{0} is riding',off:'{0} is not riding right now',offNote:'The location only appears while a ride is being recorded.',bad:'This link is not valid (anymore).',badNote:'Ask for a new link.',since:'since {0}',last:'last location {0}',ago:function(s){return s<10?'just now':s<60?s+' s ago':s<3600?Math.round(s/60)+' min ago':Math.floor(s/3600)+' h ago'},still:'Stationary for {0} min',noNet:'Last location {0} min ago – probably no signal',mode:{mx:'Motocross',race:'Enduro Race',enduro:'Enduro',sm:'Supermoto'},note:'Linefact is not an emergency system. Without signal or battery no location is sent. In an emergency, call your local emergency number (112 in Europe).',map:'Map',err:'Connection problem – trying again …'}
-:{rider:'Fahrer',on:'{0} fährt gerade',off:'{0} fährt gerade nicht',offNote:'Der Standort erscheint nur, während eine Fahrt aufgezeichnet wird.',bad:'Dieser Link ist nicht (mehr) gültig.',badNote:'Frag nach einem neuen Link.',since:'seit {0}',last:'letzter Standort {0}',ago:function(s){return s<10?'gerade eben':s<60?'vor '+s+' s':s<3600?'vor '+Math.round(s/60)+' Min.':'vor '+Math.floor(s/3600)+' Std.'},still:'Steht seit {0} Min. still',noNet:'Letzter Standort vor {0} Min. – vermutlich kein Netz',mode:{mx:'Motocross',race:'Enduro Race',enduro:'Enduro',sm:'Supermoto'},note:'Linefact ist kein Notrufsystem. Ohne Netz oder Akku wird kein Standort übertragen. Im Notfall die örtliche Notrufnummer wählen (in Europa 112).',map:'Karte',err:'Verbindungsproblem – neuer Versuch …'};
+var TX=EN?{rider:'Rider',on:'{0} is riding',off:'{0} is not riding right now',offNote:'The location appears automatically as soon as a ride starts – you can keep this page open.',bad:'The rider is not riding right now',badNote:'The location appears automatically as soon as a ride starts – you can keep this page open.',lS:'Status',lSent:'Last sent',lSince:'Riding since',lMode:'Sport',lChk:'Page updated',sRide:'Riding',sStill:'Stationary for {0} min',sNoNet:'No signal for {0} min',sOff:'Not riding',sErr:'Connection interrupted – trying again …',every:'checks every {0} s',dur:function(m){return m<60?m+' min':Math.floor(m/60)+' h '+(m%60)+' min'},since:'since {0}',last:'last location {0}',ago:function(s){return s<10?'just now':s<60?s+' s ago':s<3600?Math.round(s/60)+' min ago':Math.floor(s/3600)+' h ago'},still:'Stationary for {0} min',noNet:'Last location {0} min ago – probably no signal',mode:{mx:'Motocross',race:'Enduro Race',enduro:'Enduro',sm:'Supermoto'},note:'Linefact is not an emergency system. Without signal or battery no location is sent. In an emergency, call your local emergency number (112 in Europe).',map:'Map',err:'Connection problem – trying again …'}
+:{rider:'Fahrer',on:'{0} fährt gerade',off:'{0} fährt gerade nicht',offNote:'Der Standort erscheint automatisch, sobald eine Fahrt startet – die Seite kann offen bleiben.',bad:'Der Fahrer fährt gerade nicht',badNote:'Der Standort erscheint automatisch, sobald eine Fahrt startet – die Seite kann offen bleiben.',lS:'Status',lSent:'Zuletzt gesendet',lSince:'Unterwegs seit',lMode:'Sportart',lChk:'Seite aktualisiert',sRide:'Fährt',sStill:'Steht seit {0} Min.',sNoNet:'Kein Signal seit {0} Min.',sOff:'Fährt gerade nicht',sErr:'Verbindung unterbrochen – neuer Versuch …',every:'prüft alle {0} s',dur:function(m){return m<60?m+' Min.':Math.floor(m/60)+' Std. '+(m%60)+' Min.'},since:'seit {0}',last:'letzter Standort {0}',ago:function(s){return s<10?'gerade eben':s<60?'vor '+s+' s':s<3600?'vor '+Math.round(s/60)+' Min.':'vor '+Math.floor(s/3600)+' Std.'},still:'Steht seit {0} Min. still',noNet:'Letzter Standort vor {0} Min. – vermutlich kein Netz',mode:{mx:'Motocross',race:'Enduro Race',enduro:'Enduro',sm:'Supermoto'},note:'Linefact ist kein Notrufsystem. Ohne Netz oder Akku wird kein Standort übertragen. Im Notfall die örtliche Notrufnummer wählen (in Europa 112).',map:'Karte',err:'Verbindungsproblem – neuer Versuch …'};
 if(EN)document.documentElement.lang='en';
 function f(s,a){return s.replace('{0}',a)}
 function $(i){return document.getElementById(i)}
-$('lvNote').textContent=TX.note;$('map').setAttribute('aria-label',TX.map);
-var key=(location.hash||'').replace(/^#/,'');
+$('lvNote').textContent=TX.note;$('lsL1').textContent=TX.lS;$('lsL2').textContent=TX.lSent;$('lsL3').textContent=TX.lSince;$('lsL4').textContent=TX.lMode;$('lsL5').textContent=TX.lChk;$('map').setAttribute('aria-label',TX.map);
+var key=(location.hash||'').replace(/^#/,'');if(!key){var mm=location.href.match(/(?:%23|[?&]k=)([A-Za-z0-9_-]{20,64})/);if(mm)key=mm[1]}key=key.replace(/[^A-Za-z0-9_-].*$/,'');
 var map=null,mk=null,an=null,skew=0,last=null,tm=0;
 // Karte „Linefact Outdoor“ wie in der App: OSM-Daten (Protomaps) von Cloudflare R2, Höhen (Schummerung + Höhenlinien) von AWS Terrain Tiles
 var PM='https://maps.linefact-maps.com/world.pmtiles',DEM='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
@@ -96,19 +108,29 @@ function move(lat,lon,old){if(!window.maplibregl||!window.pmtiles||!window.lfOff
   (function st(t){var k=Math.min(1,(t-t0)/dur);var p=[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k];mk.setLngLat(p);var bb=map.getBounds();var w=bb.getEast()-bb.getWest(),h=bb.getNorth()-bb.getSouth();
     if(p[0]<bb.getWest()+w*.2||p[0]>bb.getEast()-w*.2||p[1]<bb.getSouth()+h*.2||p[1]>bb.getNorth()-h*.2)map.easeTo({center:p,duration:600});if(k<1)an=requestAnimationFrame(st)})(t0)}
 function hm(iso){try{return new Date(iso).toLocaleTimeString(EN?'en-GB':'de-AT',{hour:'2-digit',minute:'2-digit'})}catch(e){return''}}
-function render(j){var nm=(j&&j.name)||TX.rider;
-  if(!j||!j.ok){$('lvTitle').textContent=TX.bad;$('lvSub').textContent=TX.badNote;$('lvStill').hidden=$('lvOld').hidden=true;return}
+function hms(d){try{return d.toLocaleTimeString(EN?'en-GB':'de-AT',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}catch(e){return''}}
+var chk=null,cerr=false;
+function stat(){var j=last,now=Date.now()-skew;$('lsChk').textContent=chk?(cerr?TX.sErr:f(TX.every,document.hidden?30:10)+' · '+hms(chk)):'…';
+  var on=!!(j&&j.active);['lsSentR','lsSinceR','lsModeR'].forEach(function(i){$(i).hidden=!on});var S=$('lsStatus');S.textContent='';var d=document.createElement('span');
+  if(!on){d.className='sd no';S.append(d,document.createTextNode(TX.sOff));return}
+  var age=Math.max(0,Math.round((now-Date.parse(j.at))/1000)),old=age>120,still=j.still_since&&!old?Math.max(2,Math.round((now-Date.parse(j.still_since))/60000)):0;
+  d.className='sd '+(old?'no':still?'st':'ok');S.append(d,document.createTextNode(old?f(TX.sNoNet,Math.round(age/60)):still?f(TX.sStill,still):TX.sRide));
+  $('lsSent').textContent=TX.ago(age)+' · '+hms(new Date(Date.parse(j.at)));
+  var mins=Math.max(0,Math.round((now-Date.parse(j.started_at))/60000));$('lsSince').textContent=hm(j.started_at)+' ('+TX.dur(mins)+')';$('lsMode').textContent=TX.mode[j.mode]||'–'}
+setInterval(stat,1000);
+function render(j){var nm=(j&&j.name)||TX.rider;chk=new Date();cerr=false;
+  if(!j||!j.ok){last=null;$('lvTitle').textContent=TX.bad;$('lvSub').textContent=TX.badNote;$('lvStill').hidden=$('lvOld').hidden=true;if(mk){mk.remove();mk=null}stat();return}
   var now=Date.parse(j.now)||Date.now();skew=Date.now()-now;
-  if(!j.active){last=null;$('lvTitle').textContent=f(TX.off,nm);$('lvSub').textContent=TX.offNote;$('lvStill').hidden=$('lvOld').hidden=true;if(mk){mk.remove();mk=null}return}
+  if(!j.active){last=null;$('lvTitle').textContent=f(TX.off,nm);$('lvSub').textContent=TX.offNote;$('lvStill').hidden=$('lvOld').hidden=true;if(mk){mk.remove();mk=null}stat();return}
   last=j;var age=Math.max(0,Math.round((now-Date.parse(j.at))/1000));var old=age>120;
   $('lvTitle').textContent=f(TX.on,nm);
-  $('lvSub').textContent=[TX.mode[j.mode]||'',f(TX.since,hm(j.started_at)),f(TX.last,TX.ago(age))].filter(Boolean).join(' · ');
+  $('lvSub').textContent=[TX.mode[j.mode]||'',f(TX.since,hm(j.started_at))].filter(Boolean).join(' · ');
   $('lvOld').hidden=!old;if(old)$('lvOld').textContent=f(TX.noNet,Math.round(age/60));
   var st=j.still_since&&!old?Math.max(2,Math.round((now-Date.parse(j.still_since))/60000)):0;$('lvStill').hidden=!st;if(st){$('lvStill').innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;vertical-align:-3px;margin-right:6px"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></svg>';$('lvStill').append(document.createTextNode(f(TX.still,st)))}
-  move(j.lat,j.lon,old)}
+  stat();move(j.lat,j.lon,old)}
 function tick(){if(!key){render(null);return}
   fetch(SB+'/rest/v1/rpc/live_view',{method:'POST',headers:{'apikey':KEY,'Content-Type':'application/json'},body:JSON.stringify({p_key:key}),cache:'no-store',referrerPolicy:'no-referrer'})
-   .then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).then(render).catch(function(){if(!last){$('lvTitle').textContent=TX.err}})
+   .then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).then(render).catch(function(){chk=new Date();cerr=true;if(!last){$('lvTitle').textContent=TX.err}stat()})
    .then(function(){clearTimeout(tm);tm=setTimeout(tick,document.hidden?30000:10000)})}
 document.addEventListener('visibilitychange',function(){if(!document.hidden&&last){clearTimeout(tm);tick()}});
 initMap();tick();
