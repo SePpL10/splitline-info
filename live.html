@@ -114,7 +114,7 @@ function hms(d){try{return d.toLocaleTimeString(EN?'en-GB':'de-AT',{hour:'2-digi
 var chk=null,cerr=false,lastP=null;
 function stat(){var j=last,now=Date.now()-skew;$('lsChk').textContent=chk?(cerr?TX.sErr:f(TX.every,document.hidden?30:10)+' · '+hms(chk)):'…';
   var on=!!(j&&j.active),L=!on&&lastP;['lsSentR','lsSinceR'].forEach(function(i){$(i).hidden=!on&&!L});$('lsModeR').hidden=!on&&!L;var S=$('lsStatus');S.textContent='';var d=document.createElement('span');
-  if(L){d.className='sd no';S.append(d,document.createTextNode(f(TX.sEnd,hm(L.ended_at))));$('lsL2').textContent=TX.lLast;var ag=Math.max(0,Math.round((now-Date.parse(L.at))/1000));$('lsSent').textContent=hm(L.at); // Josef 15.11.: beim letzten Standort nur die Uhrzeit, kein laufender Zähler$('lsL3').textContent=TX.lRide;$('lsSince').textContent=L.started_at?hm(L.started_at)+' – '+hm(L.ended_at):hm(L.ended_at);$('lsMode').textContent=TX.mode[L.mode]||'–';return}
+  if(L){d.className='sd no';S.append(d,document.createTextNode(f(TX.sEnd,hm(L.ended_at))));$('lsL2').textContent=TX.lLast;var ag=Math.max(0,Math.round((now-Date.parse(L.at))/1000));$('lsSent').textContent=hm(L.at);/* Josef 15.11.: beim letzten Standort nur die Uhrzeit, kein laufender Zähler */$('lsL3').textContent=TX.lRide;$('lsSince').textContent=L.started_at?hm(L.started_at)+' – '+hm(L.ended_at):hm(L.ended_at);$('lsMode').textContent=TX.mode[L.mode]||'–';return}
   $('lsL2').textContent=TX.lSent;$('lsL3').textContent=TX.lSince;
   if(!on){d.className='sd no';S.append(d,document.createTextNode(TX.sOff));return}
   var age=Math.max(0,Math.round((now-Date.parse(j.at))/1000)),old=age>120,still=j.still_since&&!old?Math.max(2,Math.round((now-Date.parse(j.still_since))/60000)):0;
