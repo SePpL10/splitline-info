@@ -378,8 +378,7 @@ html.lfweb #morePro,html.lfweb #setMx,html.lfweb #dbPanel,html.lfweb #ntPanel,ht
 html.lfweb .lfwebnote{margin:10px 0 0;font-size:.86rem;line-height:1.45;opacity:.85}
 @media (min-width:900px){
   html.lfweb body{padding-left:248px}
-  html.lfweb .nav{position:fixed!important;left:0!important;top:0!important;bottom:0!important;right:auto!important;width:248px!important;height:auto!important;display:flex!important;flex-direction:column!important;justify-content:flex-start!important;align-items:stretch!important;gap:4px!important;padding:96px 14px 18px!important;border-top:0!important;border-right:1px solid var(--line)!important;box-sizing:border-box;transform:none!important}
-  html.lfweb .nav::before{content:"Linefact.";position:absolute;left:24px;top:30px;font-family:var(--head,var(--body));font-weight:800;font-size:1.55rem;letter-spacing:-.01em;color:var(--ink)}
+  html.lfweb .nav{position:fixed!important;left:0!important;top:0!important;bottom:0!important;right:auto!important;width:248px!important;height:auto!important;display:flex!important;flex-direction:column!important;justify-content:flex-start!important;align-items:stretch!important;gap:4px!important;padding:20px 14px 18px!important;border-top:0!important;border-right:1px solid var(--line)!important;box-sizing:border-box;transform:none!important}
   html.lfweb .nav button{flex:0 0 auto!important;width:100%!important;flex-direction:row!important;justify-content:flex-start!important;gap:14px!important;min-height:48px!important;padding:10px 14px!important;font-size:1rem!important;border-radius:12px!important}
   html.lfweb .nav button svg{width:22px;height:22px;flex:0 0 auto}
   html.lfweb .nav button[aria-current="page"]{background:rgba(30,80,255,.12)!important}
@@ -403,6 +402,34 @@ html.lfweb .lfwebnote{margin:10px 0 0;font-size:.86rem;line-height:1.45;opacity:
   html.lfweb #anaBody svg.anamap{max-height:520px}
   html.lfweb #elevBox #elev{height:240px!important}
   html.lfweb .toast{left:calc(50% + 124px)}
+  /* Josef 24.11.2026 (22:10): Kopf des Menüs – Profilbild links neben dem Schriftzug, darunter „Als … auftreten“ */
+  html.lfweb .wrap>header{display:none!important}
+  html.lfweb .nav .wtop{display:flex;align-items:center;gap:12px;padding:6px 8px 14px;flex:0 0 auto}
+  html.lfweb .nav .wtop button.wav{flex:0 0 44px!important;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;padding:0!important;margin:0!important;border-radius:50%!important;justify-content:center!important;gap:0!important;overflow:hidden;cursor:pointer}
+  html.lfweb .nav .wtop button.wav svg{width:22px;height:22px}
+  html.lfweb .nav .wtop .wlogo{font-family:var(--head,var(--body));font-weight:800;font-size:1.5rem;letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
+  html.lfweb .nav .wtop .wlogo i{font-style:normal;color:var(--accent-t,var(--accent))}
+  html.lfweb .nav button.wact{width:auto!important;max-width:100%!important;align-self:flex-start!important;min-height:34px!important;margin:0 0 12px 8px!important;padding:6px 12px!important;gap:6px!important;border:0!important;border-radius:99px!important;background:rgba(30,80,255,.14)!important;color:var(--accent-t,var(--accent))!important;font-size:.85rem!important;font-weight:750;white-space:normal;text-align:left;cursor:pointer}
+  html.lfweb .nav button.wact svg{width:16px;height:16px}
+  html.lfweb .nav button.wact[hidden],html.lfweb .nav button.wnav[hidden]{display:none!important}
+  html.lfweb .nav button.wnav{position:relative;cursor:pointer}
+  html.lfweb .nav button.wnav .wbn{margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#E5484D;color:#fff;font-size:.74rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+  html.lfweb .nav button.wnav .wbn[hidden]{display:none}
+  html.lfweb #setGar,html.lfweb .lfwebhide,html.lfweb #rlBack,html.lfweb #rvwGo,html.lfweb #rvwNone{display:none!important}
+  /* Höhenlinien über den ganzen Bildschirm */
+  html.lfweb .topo{top:0!important;bottom:0!important;left:0!important;right:0!important;height:auto!important;-webkit-mask-image:none!important;mask-image:none!important}
+  html.lfweb .topo-svg path{vector-effect:non-scaling-stroke}
+  /* Fotos sofort sichtbar: Karte groß, Fotos als Raster darunter – kein Wischen mit der Maus */
+  html.lfweb .dcar,html.lfweb .fmedia{flex-wrap:wrap!important;overflow:visible!important;scroll-snap-type:none!important;border-radius:0!important}
+  html.lfweb .dcar .dslide,html.lfweb .fmedia>.fmap{flex:0 0 100%!important;border-radius:14px;overflow:hidden}
+  html.lfweb .dcar .dslide.ph{flex:0 0 calc((100% - 16px) / 3)!important;height:220px!important}
+  html.lfweb .fmedia>.fmap.fph{flex:0 0 calc((100% - 16px) / 3)!important}
+  html.lfweb .phcount{display:none!important}
+  /* Die App schiebt die Karten-Bedienelemente über die untere Leiste – am Desktop steht das Menü links, also ganz unten (sonst sind Maßstab, Quellenangabe und Zoom außerhalb des Bildes) */
+  html.lfweb #tmap .leaflet-bottom{bottom:0!important}
+  html.lfweb #tmap .leaflet-control-zoom{margin:0 14px 12px 0!important}
+  html.lfweb #scr-detail #actSw,html.lfweb #scr-hist #actSw,html.lfweb #actSw{display:none!important}
+  html.lfweb .ddots{display:none!important}
 }
 
 </style>
@@ -1492,7 +1519,10 @@ body.allfree #morePro,body.allfree .procta,body.allfree .plk,body.allfree .abo-o
 .prmod{display:flex;gap:8px;margin-left:auto}.prmod .small{font-size:.8rem}html body #prRel>button,html body #prRel .prmod button{flex:none!important;width:auto!important;min-height:36px!important;height:36px!important;padding:0 14px!important;font-size:.92rem!important;font-weight:700!important;border-radius:12px!important;box-shadow:none!important;line-height:1}
 button.prep{color:var(--muted)}.pdel.pd2{margin-left:0}
 .devapps{display:grid;gap:10px;margin:10px 0 12px}.devapp{border:1px solid var(--line);border-radius:14px;padding:12px}.devapph{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.devapph small{color:var(--muted);font-size:.78rem}.devapp .note{margin:6px 0 8px}a.devlink{display:inline-block;text-decoration:none}
-.ivbody{display:flex;flex-direction:column;gap:10px}.ivmap{width:100%;height:auto;border-radius:14px;border:1px solid var(--line)}.ivmapbox .fmap{border:1px solid var(--line)}html body #ivName,#ivKind{display:block;width:100%;box-sizing:border-box;height:50px;padding:0 14px;font-size:1.05rem;font-weight:600;border-radius:14px;border:1px solid var(--line);background:var(--card,#fff);color:inherit}html body .pvl[for=ivName]{font-size:.95rem;margin:16px 0 6px}.ivstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}.ivst{border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column}.ivst small{color:var(--muted);font-size:.75rem}
+.ivbody{display:flex;flex-direction:column;gap:10px}
+/* 1.2 (Josef 24.11.2026): Felder der Import-Vorschau wurden zusammengedrückt, sobald der Inhalt höher als der Bildschirm war – Text im Auswahlfeld abgeschnitten */
+.ivbody>*{flex:0 0 auto}
+html body #ivKind{-webkit-appearance:none;appearance:none;line-height:1.2;padding-right:40px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238A9099' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 12px center!important;background-size:20px!important}.ivmap{width:100%;height:auto;border-radius:14px;border:1px solid var(--line)}.ivmapbox .fmap{border:1px solid var(--line)}html body #ivName,html body #ivKind{display:block;width:100%;box-sizing:border-box;height:50px;padding:0 14px;font-size:1.05rem;font-weight:600;border-radius:14px;border:1px solid var(--line);background:var(--card,#fff);color:inherit}html body .pvl[for=ivName]{font-size:.95rem;margin:16px 0 6px}.ivstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}.ivst{border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column}.ivst small{color:var(--muted);font-size:.75rem}
 .welfeed{margin:0 0 12px;padding:0;list-style:none}
 .shph{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:4px 0}
 /* 1.0.58 */
@@ -5316,7 +5346,7 @@ function drawElev(tr,color,mk){const cv=$('elev'),{c,W,H}=prep(cv);
     const tx=nf0.format(Math.round(v[1]))+' '+uA()+'  ·  '+(xmax<20?nf2.format(v[0]):nf1.format(v[0]))+' '+uD();c.font='800 12px '+ff;const tw=c.measureText(tx).width,bw=tw+14,bh=19;let bx=Math.max(L,Math.min(W-R-bw,mx-bw/2));
     c.fillStyle=ink;c.beginPath();if(c.roundRect)c.roundRect(bx,1,bw,bh,6);else c.rect(bx,1,bw,bh);c.fill();c.fillStyle=dark?'#121418':'#fff';c.textAlign='left';c.textBaseline='middle';c.fillText(tx,bx+7,1+bh/2+.5)}
   cv._elv={D,L,pw,xmax,tr,color};if(!cv._elvOn){cv._elvOn=true;let down=false;const at=e=>{const q=cv._elv;if(!q||!q.D.length)return;const r=cv.getBoundingClientRect(),xv=Math.max(0,Math.min(q.xmax,(e.clientX-r.left-q.L)/q.pw*q.xmax));let lo=0,hi2=q.D.length-1;while(hi2-lo>1){const m=(lo+hi2)>>1;if(q.D[m][0]<=xv)lo=m;else hi2=m}const i=(xv-q.D[lo][0])<=(q.D[hi2][0]-xv)?lo:hi2;if(i!==cv._elvI){cv._elvI=i;drawElev(q.tr,q.color,i)}};
-    cv.addEventListener('pointerdown',e=>{down=true;clearTimeout(cv._elvH);try{cv.setPointerCapture(e.pointerId)}catch(x){}at(e)});cv.addEventListener('pointermove',e=>{if(down||e.pointerType==='mouse')at(e)});const up=()=>{down=false;clearTimeout(cv._elvH);cv._elvH=setTimeout(()=>{const m=$('elevMini');if(m)m.hidden=true},2500)};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up)}
+    cv.addEventListener('pointerdown',e=>{down=true;clearTimeout(cv._elvH);try{cv.setPointerCapture(e.pointerId)}catch(x){}at(e)});cv.addEventListener('pointermove',e=>{if(down||e.pointerType==='mouse')at(e)});const up=()=>{down=false;clearTimeout(cv._elvH);const m=$('elevMini');if(m)m.hidden=true};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up)}
   if(mk==null){cv._elvI=null;elevPos(tr,null)}
   // Zeile darunter: höchster / tiefster Punkt
   const ft=$('elevFt');if(ft){ft.innerHTML='';const it=(l,v)=>{const s=el('span');s.append(el('small',null,T(l)),el('b',null,nf0.format(Math.round(v))+' '+uA(),1));return s};ft.append(it('Höchster Punkt',hi[1]),it('Tiefster Punkt',lo[1]))}
@@ -10099,8 +10129,48 @@ try{(function(){
   try{const t0=tiles;tiles=function(onErr,sm){if(lfoOK()||MB_KEY)return t0(onErr,sm);return L.gridLayer()}}catch(e){}
 
   // --- kein „Fahren“ am Desktop
-  const ss0=showScreen;showScreen=function(n){if(n==='ride'){try{toast(w('ride'))}catch(e){}if(curScreen&&curScreen!=='ride')return;n='hist'}return ss0(n)};
+  const ss0=showScreen;showScreen=function(n){if(n==='ride'){try{toast(w('ride'))}catch(e){}if(curScreen&&curScreen!=='ride')return;n='hist'}const r=ss0(n);try{webAfterScreen()}catch(e){}return r};
   try{const nv=document.querySelector('.nav');if(nv)nv.dataset.webnote=w('side')}catch(e){}
+
+  // --- Josef 24.11.2026 (22:10): Menü links mit Profilbild, „Als … auftreten“, Mitteilungen, Meine Routen, Garage; Zoom-Knöpfe auf den Karten
+  let wRoutes=null;const wOv=[];
+  function webAfterScreen(){try{if(wRoutes){const on=curScreen==='routes'||curScreen==='rtview';if(on)wRoutes.setAttribute('aria-current','page');else wRoutes.removeAttribute('aria-current')}}catch(e){}
+    const z=()=>{try{[TM,RT].forEach(M=>{if(M&&M.map&&!M._wz)M._wz=L.control.zoom({position:'bottomright',zoomInTitle:'+',zoomOutTitle:'−'}).addTo(M.map)})}catch(e){}};z();setTimeout(z,400);setTimeout(z,1600)}
+  try{const nv=document.querySelector('.nav'),more=nv.querySelector('button[data-go="more"]');
+    const closeOv=()=>{try{$('inbView').hidden=true}catch(e){}try{if(!$('garView').hidden)garClose()}catch(e){}};
+    nv.querySelectorAll('button[data-go]').forEach(b=>b.addEventListener('click',closeOv,true));
+    const mk=(svg,label,fn)=>{const b=document.createElement('button');b.type='button';b.className='wnav';b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+svg+'</svg>';const sp=document.createElement('span');sp.textContent=T(label);b.append(sp);b.onclick=()=>{closeOv();fn()};return b};
+    // Kopf: Profilbild links neben dem Schriftzug
+    const top=document.createElement('div');top.className='wtop';
+    const av=document.createElement('button');av.type='button';av.className='hprof wav';av.setAttribute('aria-label',T('Mein Profil'));av.onclick=()=>{closeOv();$('hProf').click()};
+    const lg=document.createElement('span');lg.className='wlogo';lg.innerHTML='Linefact<i>.</i>';top.append(av,lg);
+    const syncAv=()=>{try{const c=$('hProfAv').cloneNode(true);c.removeAttribute('id');av.replaceChildren(c)}catch(e){}};
+    new MutationObserver(syncAv).observe($('hProfAv'),{childList:true,subtree:true,attributes:true});syncAv();
+    // „Als … auftreten“ (nur für Leute, die eine Seite verwalten) – spiegelt den Knopf aus dem Profil
+    const act=document.createElement('button');act.type='button';act.className='wact';act.hidden=true;act.onclick=()=>{closeOv();$('actSw').click()};
+    const syncAct=()=>{try{const s0=$('actSw');act.hidden=s0.hidden;act.innerHTML=s0.innerHTML}catch(e){}};
+    new MutationObserver(syncAct).observe($('actSw'),{childList:true,subtree:true,attributes:true,characterData:true});syncAct();
+    nv.prepend(top,act);
+    // Mitteilungen (nur angemeldet), mit Zähler
+    const bell=mk('<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>','Mitteilungen',()=>openInbox());
+    const bn=document.createElement('span');bn.className='wbn';bn.hidden=true;bell.append(bn);
+    const syncBell=()=>{try{bell.hidden=$('hBell').hidden;bn.hidden=$('hBellN').hidden;bn.textContent=$('hBellN').textContent}catch(e){}};
+    [$('hBell'),$('hBellN')].forEach(x=>new MutationObserver(syncBell).observe(x,{childList:true,attributes:true,characterData:true,subtree:true}));syncBell();
+    wRoutes=mk('<path d="M5 19c0-6 14-2 14-9a3 3 0 0 0-6 0"/><circle cx="5" cy="19" r="2"/><circle cx="16" cy="7" r="1"/>','Meine Routen',()=>openRoutes());
+    const gar=mk('<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h5l3 7M10 9l-1-3H7M15 9l2-2"/>','Garage',()=>garOpen(null));
+    more.before(bell,wRoutes,gar);
+    // geöffnete Ansicht (Mitteilungen, Garage) im Menü markieren
+    const ovs=[[$('inbView'),bell],[$('garView'),gar]];let keep=null;
+    const syncOv=()=>{const open=ovs.find(o=>!o[0].hidden);ovs.forEach(o=>{if(o===open)o[1].setAttribute('aria-current','page');else o[1].removeAttribute('aria-current')});
+      if(open){const c=nv.querySelector('button[data-go][aria-current="page"]')||(wRoutes.getAttribute('aria-current')?wRoutes:null);if(c){keep=c;c.removeAttribute('aria-current')}}else if(keep){if(!nv.querySelector('button[data-go][aria-current="page"]')&&!wRoutes.getAttribute('aria-current'))keep.setAttribute('aria-current','page');keep=null}};
+    ovs.forEach(o=>new MutationObserver(syncOv).observe(o[0],{attributes:true,attributeFilter:['hidden']}));
+  }catch(e){try{console.error('Linefact Web-Menü',e)}catch(x){}}
+  // --- Mehr: nur Einstellungen, die am Computer Sinn machen (Fahren, Ansagen, Pfeil, Offline-Karten gibt es hier nicht)
+  try{['optVoice','optVib','optKm','optDashMap','optPos','optMapHup','optOffMap','optMbKey','optMtKey'].forEach(id=>{const e=$(id);if(e)(e.closest('.srow')||e).classList.add('lfwebhide')});
+    const sm=document.querySelector('#setEn>summary small');if(sm)sm.textContent=T('Kartenstil')}catch(e){}
+  // --- „Weitere Funktionen“ ganz weg, wenn am Computer nichts darin übrig ist
+  try{const mf=$('moreFn'),fix=()=>{if(!mf.hidden&&$('saveRtBtn').hidden&&$('kindBtn').hidden)mf.hidden=true};new MutationObserver(fix).observe(mf,{attributes:true,attributeFilter:['hidden']});fix()}catch(e){}
+  try{webAfterScreen()}catch(e){}
 
   // --- nur anmelden: keine Registrierung im Web
   const ao0=authOpen;authOpen=function(){const r=ao0('in');try{$('acGo').textContent=w('in')}catch(e){}return r};
