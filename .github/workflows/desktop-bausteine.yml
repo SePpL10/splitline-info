@@ -33,7 +33,8 @@ jobs:
           cp "$N/maplibre-contour/dist/index.min.js" "$D/maplibre-contour.js"
           cp "$N/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js" "$D/"
           F="$N/@fontsource-variable/archivo/files"
-          f=$(ls $F/*latin-full-normal.woff2 $F/*latin-wdth-normal.woff2 $F/*latin-wght-normal.woff2 2>/dev/null | grep -v ext | head -1)
+          f=$( (ls $F/*latin-full-normal.woff2 $F/*latin-wdth-normal.woff2 $F/*latin-wght-normal.woff2 2>/dev/null || true) | grep -v ext | head -1)
+          test -n "$f"
           cp "$f" "$D/fonts/archivo.woff2"
           printf '%s\n' '@font-face{font-family:"Archivo";font-style:normal;font-weight:100 900;font-stretch:62% 125%;font-display:swap;src:url(fonts/archivo.woff2) format("woff2")}' > "$D/fonts.css"
           : > "$D/mapbox-gl.css"
