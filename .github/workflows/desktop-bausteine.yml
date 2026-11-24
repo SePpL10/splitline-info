@@ -1,0 +1,55 @@
+# Linefact am Desktop (Testfassung unter /desk-k7q3/): fremde Bausteine selbst hosten – Josef 24.11.2026
+# Läuft, wenn diese Datei oder die Web-Fassung auf main kommt, und per Knopf (Actions › „Desktop-Bausteine laden“ › Run workflow).
+# Lädt Leaflet, MapLibre, das Verbindungsstück Leaflet–MapLibre, PMTiles, maplibre-contour und die Schrift Archivo in fester
+# Version von npm (dieselben Versionen wie die iPhone-App) und legt sie unter desk-k7q3/vendor/ ab.
+# Die Seite lädt dadurch nichts von fremden Servern (kein CDN).
+name: Desktop-Bausteine laden
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/desktop-bausteine.yml', 'desk-k7q3/index.html']
+permissions:
+  contents: write
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Dateien von npm laden
+        run: |
+          set -euo pipefail
+          D=desk-k7q3/vendor
+          T=$(mktemp -d)
+          (cd "$T" && npm install --no-save --no-audit --no-fund --legacy-peer-deps leaflet@1.9.4 maplibre-gl@5.9.0 pmtiles@4.5.0 maplibre-contour@0.1.1 @maplibre/maplibre-gl-leaflet@0.1.4 @fontsource-variable/archivo@5 >/dev/null)
+          N="$T/node_modules"
+          rm -rf "$D"; mkdir -p "$D/fonts" "$D/licenses"
+          cp "$N/leaflet/dist/leaflet.js" "$D/"
+          cp "$N/maplibre-gl/dist/maplibre-gl.js" "$N/maplibre-gl/dist/maplibre-gl.css" "$D/"
+          cp "$N/pmtiles/dist/pmtiles.js" "$D/"
+          cp "$N/maplibre-contour/dist/index.min.js" "$D/maplibre-contour.js"
+          cp "$N/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js" "$D/"
+          F="$N/@fontsource-variable/archivo/files"
+          f=$(ls $F/*latin-full-normal.woff2 $F/*latin-wdth-normal.woff2 $F/*latin-wght-normal.woff2 2>/dev/null | grep -v ext | head -1)
+          cp "$f" "$D/fonts/archivo.woff2"
+          printf '%s\n' '@font-face{font-family:"Archivo";font-style:normal;font-weight:100 900;font-stretch:62% 125%;font-display:swap;src:url(fonts/archivo.woff2) format("woff2")}' > "$D/fonts.css"
+          : > "$D/mapbox-gl.css"
+          sed -i '/sourceMappingURL=/d' "$D"/*.js "$D"/maplibre-gl.css
+          for p in leaflet maplibre-gl pmtiles maplibre-contour @maplibre/maplibre-gl-leaflet @fontsource-variable/archivo; do
+            n=$(echo "$p" | sed 's#@##; s#/#_#g')
+            for l in "$N/$p"/LICENSE* "$N/$p"/LICENCE* "$N/$p"/license*; do if [ -f "$l" ]; then cp "$l" "$D/licenses/$n.txt"; break; fi; done
+          done
+          if [ -d desk-k7q3/lfmap/licenses ]; then cp desk-k7q3/lfmap/licenses/*.txt "$D/licenses/" || true; fi
+          (cd "$D/licenses" && ls *.txt > list.txt)
+          for x in leaflet.js maplibre-gl.js maplibre-gl.css pmtiles.js maplibre-contour.js leaflet-maplibre-gl.js fonts/archivo.woff2 fonts.css; do test -s "$D/$x"; done
+          ls -la "$D"
+      - name: Ergebnis speichern
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add desk-k7q3/vendor
+          if git diff --cached --quiet; then echo "Nichts geändert."; else git commit -m "Desktop-Testfassung: Bausteine (Leaflet, MapLibre, PMTiles, Schrift) unter desk-k7q3/vendor"; git push; fi
