@@ -1,0 +1,13 @@
+Linefact Outdoor – Kartendaten / Map data
+
+© OpenStreetMap contributors (OpenStreetMap-Mitwirkende)
+https://www.openstreetmap.org/copyright
+
+The map data is available under the Open Database License (ODbL) 1.0:
+https://opendatacommons.org/licenses/odbl/1-0/
+
+Linefact Outdoor uses the Protomaps Basemap (a Produced Work of OpenStreetMap,
+ODbL) including water and land polygons from osmdata.openstreetmap.de (ODbL,
+produced with osmcoastline by Jochen Topf and contributors) and Natural Earth
+(public domain). Map design: own Linefact style based on @protomaps/basemaps
+(BSD-3-Clause, design CC0). Linefact Outdoor is not affiliated with Protomaps.
