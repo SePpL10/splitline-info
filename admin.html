@@ -433,6 +433,10 @@ function reportsSec(){const s=el('section');s.id='reports';const hd=el('div','ch
   ST.reports.forEach(r=>{const d=el('div','rep');d.append(el('div','meta',new Date(r.created_at).toLocaleString('de-AT')+' · gemeldet von @'+(r.reporter||'?')+' · betrifft @'+(r.target_username||'gelöschtes Konto')+(r.handled?' · erledigt':'')));
     d.append(el('div','why',r.reason?'Grund: '+r.reason:'Kein Grund angegeben'));
     if(r.activity)d.append(el('div','ctx',r.act_name||r.act_text?((r.act_mode==='post'?'Beitrag: ':'Aktivität: ')+(r.act_name||'')+(r.act_text?'\n'+r.act_text:'')):'Inhalt nicht mehr vorhanden.'));
+    /* 26.11.2026: Kopie des gemeldeten Textes (Stand zum Zeitpunkt der Meldung). Nur zeigen, wenn es eine gibt; hervorheben, wenn der Inhalt seither geändert oder entfernt wurde. */
+    if(r.snap_at){const cur=((r.act_name||'')+'\n'+(r.act_text||'')).trim(),was=((r.snap_name||'')+'\n'+(r.snap_text||'').slice(0,300)).trim(),gone=!(r.act_name||r.act_text),chg=gone||cur!==was;
+      const sn=el('div','ctx','Gemeldeter Stand ('+new Date(r.snap_at).toLocaleString('de-AT')+')'+(chg?(gone?' – Inhalt seither entfernt':' – seither GEÄNDERT'):' – unverändert')+(r.snap_photos?' · '+r.snap_photos+' Foto'+(r.snap_photos===1?'':'s')+' (Fotos werden nicht mitgespeichert)':'')+(chg?':\n'+(r.snap_name?r.snap_name+'\n':'')+(r.snap_text||'(kein Text)'):''));
+      if(chg)sn.style.cssText='border-left:3px solid #E5484D;padding-left:10px';d.append(sn)}
     const a=el('div','acts');
     if(!r.handled){a.append(btnA('Erledigt (keine Maßnahme)','',()=>act('admin_handle_report',{p_id:r.id,p_handled:true})));
       if(r.activity&&(r.act_name||r.act_text))a.append(btnA('Inhalt entfernen','danger',()=>act('admin_remove_content',{p_activity:r.activity,p_reason:'Gemeldet und geprüft: '+(r.reason||'Verstoß gegen die Nutzungsbedingungen')}),'Inhalt wirklich entfernen?'));
